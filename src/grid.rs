@@ -241,20 +241,15 @@ fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut Vec<MeshEdge>) {
     remove(b);
 }
 
-fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<MeshEdge<'a>> {
-    match edge.a.edges {
-        None => return None,
-        Some(ref edges) => {
-            for e in edges.iter() {
-                if e.a == edge.b {
-                    // FIXME:
-                    todo!()
-                    // return Some(*e);
-                }
+fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<&'a MeshEdge<'a>> {
+  if let Some(edges) = &edge.b.edges {
+        for e in edges.iter() {
+            if e.a == edge.a {
+                return Some(*e);
             }
-            None
         }
     }
+    None
 }
 
 pub(crate) fn reconstruct(points: Vec<Point>, radius: f32) -> Option<Vec<Triangle>> {
