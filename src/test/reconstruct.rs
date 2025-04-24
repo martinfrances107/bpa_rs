@@ -49,13 +49,8 @@ fn measure_reconstruct(points: Vec<Point>, radius: f32) -> Vec<MeshFace<'static>
     todo!()
 }
 
-// TEST_CASE("sphere_36_18", "[reconstruct]") {
-// 	const auto cloud = createSphericalCloud(36, 18);
-// 	savePoints("sphere_36_18_cloud.ply", cloud);
-// 	const auto mesh = measuredReconstruct(cloud, 0.3f);
-// 	CHECK(!mesh.empty());
-// 	saveTriangles("sphere_36_18_mesh.stl", mesh);
-// }
+
+
 #[test]
 fn sphere_36_18() {
     let cloud = create_spherical_cloud(36, 18);
@@ -63,4 +58,83 @@ fn sphere_36_18() {
     let mesh = measure_reconstruct(cloud, 0.3f32);
     assert!(!mesh.is_empty());
     // save_triangles("sphere_36_18_mesh.stl", mesh);
+}
+
+#[test]
+fn sphere_100_50() {
+    let cloud = create_spherical_cloud(100, 50);
+    // save_points("sphere_100_50_cloud.ply", cloud);
+    let mesh = measure_reconstruct(cloud, 0.1f32);
+    assert!(!mesh.is_empty());
+    // save_triangles("sphere_100_50_mesh.stl", mesh);
+}
+
+#[test]
+fn tetrahedron() {
+    let cloud = vec![
+        Point {
+            pos: Vector3::new(0.0, 0.0, 0.0),
+            normal: normalize(Vector3::new(-1.0, -1.0, -1.0)),
+        },
+        Point {
+            pos: Vector3::new(0.0, 1.0, 0.0),
+            normal: normalize(Vector3::new(0.0, 1.0, 0.0)),
+        },
+        Point {
+            pos: Vector3::new(1.0, 0.0, 0.0),
+            normal: normalize(Vector3::new(1.0, 0.0, 0.0)),
+        },
+        Point {
+            pos: Vector3::new(0.0, 0.0, 1.0),
+            normal: normalize(Vector3::new(0.0, 0.0, 1.0)),
+        },
+    ];
+    // save_points("tetrahedron_cloud.ply", cloud);
+    let mesh = measure_reconstruct(cloud, 2f32);
+    assert!(!mesh.is_empty());
+    // save_triangles("tetrahedron_mesh.stl", mesh);
+}
+
+#[test]
+fn cube() {
+    let cloud = vec![
+        Point {
+            pos: Vector3::new(-1.0, -1.0, -1.0),
+            normal: normalize(Vector3::new(-1.0, -1.0, -1.0)),
+        },
+        Point {
+            pos: Vector3::new(-1.0, 1.0, -1.0),
+            normal: normalize(Vector3::new(-1.0, 1.0, -1.0)),
+        },
+        Point {
+            pos: Vector3::new(1.0, 1.0, -1.0),
+            normal: normalize(Vector3::new(1.0, 1.0, -1.0)),
+        },
+        Point {
+            pos: Vector3::new(1.0, -1.0, -1.0),
+            normal: normalize(Vector3::new(1.0, -1.0, -1.0)),
+        },
+        Point {
+            pos: Vector3::new(-1.0, -1.0, 1.0),
+            normal: normalize(Vector3::new(-1.0, -1.0, 1.0)),
+        },
+        Point {
+            pos: Vector3::new(-1.0, 1.0, 1.0),
+            normal: normalize(Vector3::new(-1.0, 1.0, 1.0)),
+        },
+        Point {
+            pos: Vector3::new(1.0, 1.0, 1.0),
+            normal: normalize(Vector3::new(1.0, 1.0, 1.0)),
+        },
+        Point {
+            pos: Vector3::new(1.0, -1.0, 1.0),
+            normal: normalize(Vector3::new(1.0, -1.0, 1.0)),
+        },
+    ];
+    // save_points("cube_cloud.ply", cloud);
+    let mesh = measure_reconstruct(cloud, 2f32);
+    assert!(!mesh.is_empty());
+    // save_triangles("cube_mesh.stl", mesh);
+
+
 }
