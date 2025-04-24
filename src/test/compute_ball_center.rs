@@ -1,0 +1,54 @@
+use crate::grid::compute_ball_center;
+use crate::mesh::{MeshFace, MeshPoint};
+use glm::Vector3;
+
+#[test]
+fn isosceles() {
+    let a = MeshPoint::new(Vector3::<f32>::new(0.0, 0.0, 0.0));
+    let b = MeshPoint::new(Vector3::<f32>::new(10.0, 0.0, 0.0));
+    let c = MeshPoint::new(Vector3::<f32>::new(0.0, 10.0, 0.0));
+
+    let f = MeshFace([a, b, c]);
+
+    let center = compute_ball_center(f, 10.0);
+    assert_eq!(center, Some(Vector3::<f32>::new(5.0, 5.0, 7.07106781)));
+}
+
+#[test]
+fn isosceles_larger_radius() {
+    let a = MeshPoint::new(Vector3::<f32>::new(0.0, 0.0, 0.0));
+    let b = MeshPoint::new(Vector3::<f32>::new(10.0, 0.0, 0.0));
+    let c = MeshPoint::new(Vector3::<f32>::new(0.0, 10.0, 0.0));
+
+    let f = MeshFace([a, b, c]);
+
+    let center = compute_ball_center(f, 100.0);
+    assert_eq!(center, Some(Vector3::<f32>::new(5.0, 5.0, 99.7496872)));
+}
+
+#[test]
+fn equilateral() {
+    let a = MeshPoint::new(Vector3::<f32>::new(0.0, 0.0, 0.0));
+    let b = MeshPoint::new(Vector3::<f32>::new(10.0, 0.0, 0.0));
+    let c = MeshPoint::new(Vector3::<f32>::new(5.0, (3.0f32).sqrt() * 10.0 / 2.0, 0.0));
+
+    let f = MeshFace([a, b, c]);
+
+    let center = compute_ball_center(f, 10.0);
+    assert_eq!(
+        center,
+        Some(Vector3::<f32>::new(4.99999952, 2.88675070, 8.16496658))
+    );
+}
+
+#[test]
+fn radius_too_small() {
+    let a = MeshPoint::new(Vector3::<f32>::new(0.0, 0.0, 0.0));
+    let b = MeshPoint::new(Vector3::<f32>::new(10.0, 0.0, 0.0));
+    let c = MeshPoint::new(Vector3::<f32>::new(0.0, 10.0, 0.0));
+
+    let f = MeshFace([a, b, c]);
+
+    let center = compute_ball_center(f, 1.0);
+    assert_eq!(center, None);
+}
