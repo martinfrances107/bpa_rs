@@ -4,13 +4,13 @@ use crate::grid::reconstruct;
 use crate::mesh::MeshFace;
 use crate::mesh::MeshPoint;
 
-use glm::Vector3;
-use glm::normalize;
+use glam::Vec3;
+
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
-        pos: Vector3::<f32>::new(0.0, 0.0, -1.0),
-        normal: Vector3::<f32>::new(0.0, 0.0, -1.0),
+        pos: Vec3::new(0.0, 0.0, -1.0),
+        normal: Vec3::new(0.0, 0.0, -1.0),
     }];
 
     for slice in 0..slices {
@@ -22,17 +22,17 @@ fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
             let x = r * yaw.sin();
             let y = r * yaw.cos();
 
-            let pos = Vector3::<f32>::new(x, y, z);
+            let pos = Vec3::new(x, y, z);
             // This makes no sense, but the original C++ code does this
             // could there be a implicit clone?.
-            let normal = normalize(pos - Vector3::<f32>::new(0.0, 0.0, -1.0));
+            let normal = pos - Vec3::new(0.0, 0.0, -1.0).normalize();
             points.push(Point { pos, normal });
         }
     }
 
     points.push(Point {
-        pos: Vector3::new(0.0, 0.0, 1.0),
-        normal: Vector3::new(0.0, 0.0, 1.0),
+        pos: Vec3::new(0.0, 0.0, 1.0),
+        normal: Vec3::new(0.0, 0.0, 1.0),
     });
 
     points
@@ -73,20 +73,20 @@ fn sphere_100_50() {
 fn tetrahedron() {
     let cloud = vec![
         Point {
-            pos: Vector3::new(0.0, 0.0, 0.0),
-            normal: normalize(Vector3::new(-1.0, -1.0, -1.0)),
+            pos: Vec3::new(0.0, 0.0, 0.0),
+            normal: Vec3::new(-1.0, -1.0, -1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(0.0, 1.0, 0.0),
-            normal: normalize(Vector3::new(0.0, 1.0, 0.0)),
+            pos: Vec3::new(0.0, 1.0, 0.0),
+            normal: Vec3::new(0.0, 1.0, 0.0).normalize(),
         },
         Point {
-            pos: Vector3::new(1.0, 0.0, 0.0),
-            normal: normalize(Vector3::new(1.0, 0.0, 0.0)),
+            pos: Vec3::new(1.0, 0.0, 0.0),
+            normal: Vec3::new(1.0, 0.0, 0.0).normalize(),
         },
         Point {
-            pos: Vector3::new(0.0, 0.0, 1.0),
-            normal: normalize(Vector3::new(0.0, 0.0, 1.0)),
+            pos: Vec3::new(0.0, 0.0, 1.0),
+            normal: Vec3::new(0.0, 0.0, 1.0).normalize(),
         },
     ];
     // save_points("tetrahedron_cloud.ply", cloud);
@@ -99,36 +99,36 @@ fn tetrahedron() {
 fn cube() {
     let cloud = vec![
         Point {
-            pos: Vector3::new(-1.0, -1.0, -1.0),
-            normal: normalize(Vector3::new(-1.0, -1.0, -1.0)),
+            pos: Vec3::new(-1.0, -1.0, -1.0),
+            normal: Vec3::new(-1.0, -1.0, -1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(-1.0, 1.0, -1.0),
-            normal: normalize(Vector3::new(-1.0, 1.0, -1.0)),
+            pos: Vec3::new(-1.0, 1.0, -1.0),
+            normal: Vec3::new(-1.0, 1.0, -1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(1.0, 1.0, -1.0),
-            normal: normalize(Vector3::new(1.0, 1.0, -1.0)),
+            pos: Vec3::new(1.0, 1.0, -1.0),
+            normal: Vec3::new(1.0, 1.0, -1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(1.0, -1.0, -1.0),
-            normal: normalize(Vector3::new(1.0, -1.0, -1.0)),
+            pos: Vec3::new(1.0, -1.0, -1.0),
+            normal: Vec3::new(1.0, -1.0, -1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(-1.0, -1.0, 1.0),
-            normal: normalize(Vector3::new(-1.0, -1.0, 1.0)),
+            pos: Vec3::new(-1.0, -1.0, 1.0),
+            normal: Vec3::new(-1.0, -1.0, 1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(-1.0, 1.0, 1.0),
-            normal: normalize(Vector3::new(-1.0, 1.0, 1.0)),
+            pos: Vec3::new(-1.0, 1.0, 1.0),
+            normal: Vec3::new(-1.0, 1.0, 1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(1.0, 1.0, 1.0),
-            normal: normalize(Vector3::new(1.0, 1.0, 1.0)),
+            pos: Vec3::new(1.0, 1.0, 1.0),
+            normal: Vec3::new(1.0, 1.0, 1.0).normalize(),
         },
         Point {
-            pos: Vector3::new(1.0, -1.0, 1.0),
-            normal: normalize(Vector3::new(1.0, -1.0, 1.0)),
+            pos: Vec3::new(1.0, -1.0, 1.0),
+            normal: Vec3::new(1.0, -1.0, 1.0).normalize(),
         },
     ];
     // save_points("cube_cloud.ply", cloud);

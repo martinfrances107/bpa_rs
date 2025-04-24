@@ -1,11 +1,7 @@
-use glm::IVec3;
-use glm::ceil;
-use glm::ivec3;
+use glam::IVec3;
+use glam::Vec3;
+use glam::ivec3;
 
-use glm::Vector3;
-use glm::cross;
-use glm::dot;
-use glm::max;
 
 use crate::Cell;
 use crate::mesh::EdgeStatus;
@@ -20,8 +16,8 @@ struct Grid<'a> {
     cell_size: f32,
     dims: IVec3,
     cells: Vec<Cell<'a>>,
-    lower: Vector3<f32>,
-    upper: Vector3<f32>,
+    lower: Vec3,
+    upper: Vec3,
 }
 
 use std::collections::VecDeque;
@@ -39,13 +35,13 @@ impl Grid<'_> {
             }
         }
 
-        let ceil_float = ceil((upper - lower).div(cell_size));
+        let ceil_float = (upper - lower).ceil().div(cell_size);
         let ceil: IVec3 = ivec3(
             ceil_float[0] as i32,
             ceil_float[1] as i32,
             ceil_float[2] as i32,
         );
-        let dims = max(ceil, ivec3(1, 1, 1));
+        let dims = ceil.max( ivec3(1, 1, 1));
 
         let cells = Vec::with_capacity((dims.x * dims.y * dims.z) as usize);
 
@@ -65,10 +61,10 @@ impl Grid<'_> {
         grid
     }
 
-    fn cell_index(&self, point: Vector3<f32>) -> Vector3<i32> {
+    fn cell_index(&self, point: Vec3) -> IVec3 {
         let diff = (point - self.lower) / self.cell_size;
         let index = ivec3(diff.x as i32, diff.y as i32, diff.z as i32);
-        glm::clamp(index, ivec3(0, 0, 0), self.dims - 1)
+        index.clamp( ivec3(0, 0, 0), self.dims - 1)
     }
 
     fn cell(&self, index: IVec3) -> &Cell {
@@ -113,19 +109,18 @@ impl Grid<'_> {
 
 // from
 // https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d
-pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vector3<f32>> {
+pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vec3> {
     let ac = f.0[2].pos - f.0[0].pos;
     let ab = f.0[1].pos - f.0[0].pos;
-    let ab_cross_ac = glm::cross(ab, ac);
-    // const vec3 toCircumCircleCenter = (cross(abXac, ab) * dot(ac, ac) + cross(ac, abXac) * dot(ab, ab)) / (2 * dot(abXac, abXac));
+    let ab_cross_ac = ab.cross(ac);
 
-    let to_circum_circle_center = (cross(ab_cross_ac, ab) * dot(ac, ac)
-        + cross(ac, ab_cross_ac) * dot(ab, ab))
-        / (2.0 * dot(ab_cross_ac, ab_cross_ac));
+    let to_circum_circle_center = (ab_cross_ac.cross( ab) * ac.dot( ac)
+        + ac.cross( ab_cross_ac) * ab.dot( ab))
+        / (2.0 * ab_cross_ac.dot( ab_cross_ac));
 
     let circum_circle_center = f.0[0].pos + to_circum_circle_center;
 
-    let height_squared = radius * radius - dot(to_circum_circle_center, to_circum_circle_center);
+    let height_squared = radius * radius - to_circum_circle_center.dot( to_circum_circle_center);
     if height_squared.is_sign_negative() {
         return None;
     }
@@ -133,9 +128,9 @@ pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vector3<f3
     Some(circum_circle_center + f.normal() * height_squared.sqrt())
 }
 
-fn is_ball_empty(ball_center: Vector3<f32>, points: &Vec<MeshPoint>, radius: f32) -> bool {
+fn is_ball_empty(ball_center: Vec3, points: &Vec<MeshPoint>, radius: f32) -> bool {
     !points.iter().any(|p| {
-        let length_squared = glm::length(p.pos - ball_center);
+        let length_squared = (p.pos - ball_center).length_squared();
         // TODO epsilon
         length_squared < radius * radius - 1e-4
     })
@@ -143,14 +138,14 @@ fn is_ball_empty(ball_center: Vector3<f32>, points: &Vec<MeshPoint>, radius: f32
 
 struct SeedResult<'a> {
     f: MeshFace<'a>,
-    ball_center: Vector3<f32>,
+    ball_center: Vec3,
 }
 
 fn find_seed_triangle<'a>(grid: &Grid<'a>, radius: f32) -> Option<SeedResult<'a>> {
     for cell in &grid.cells {
         let avg_normal = cell
             .iter()
-            .fold(Vector3::new(0.0, 0.0, 0.0), |acc, p| match p.normal {
+            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| match p.normal {
                 Some(n) => acc + n,
                 None => acc,
             });
@@ -197,7 +192,7 @@ fn output_triangle(f: MeshFace, triangles: &mut Vec<Triangle>) {
 fn join<'a>(
     e_ij: &MeshEdge,
     o_k: MeshPoint,
-    o_k_ball_center: Vector3<f32>,
+    o_k_ball_center: Vec3,
     front: &mut Vec<MeshEdge>,
     edges: &VecDeque<MeshEdge>,
 ) -> (MeshEdge<'a>, MeshEdge<'a>) {
