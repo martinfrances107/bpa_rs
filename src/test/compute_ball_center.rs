@@ -35,10 +35,7 @@ fn equilateral() {
     let f = MeshFace([a, b, c]);
 
     let center = compute_ball_center(f, 10.0);
-    assert_eq!(
-        center,
-        Some(Vec3::new(4.99999952, 2.88675070, 8.16496658))
-    );
+    assert_eq!(center, Some(Vec3::new(4.99999952, 2.88675070, 8.16496658)));
 }
 
 #[test]

@@ -2,7 +2,6 @@ use glam::IVec3;
 use glam::Vec3;
 use glam::ivec3;
 
-
 use crate::Cell;
 use crate::mesh::EdgeStatus;
 use crate::mesh::MeshEdge;
@@ -41,7 +40,7 @@ impl Grid<'_> {
             ceil_float[1] as i32,
             ceil_float[2] as i32,
         );
-        let dims = ceil.max( ivec3(1, 1, 1));
+        let dims = ceil.max(ivec3(1, 1, 1));
 
         let cells = Vec::with_capacity((dims.x * dims.y * dims.z) as usize);
 
@@ -64,7 +63,7 @@ impl Grid<'_> {
     fn cell_index(&self, point: Vec3) -> IVec3 {
         let diff = (point - self.lower) / self.cell_size;
         let index = ivec3(diff.x as i32, diff.y as i32, diff.z as i32);
-        index.clamp( ivec3(0, 0, 0), self.dims - 1)
+        index.clamp(ivec3(0, 0, 0), self.dims - 1)
     }
 
     fn cell(&self, index: IVec3) -> &Cell {
@@ -114,13 +113,13 @@ pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vec3> {
     let ab = f.0[1].pos - f.0[0].pos;
     let ab_cross_ac = ab.cross(ac);
 
-    let to_circum_circle_center = (ab_cross_ac.cross( ab) * ac.dot( ac)
-        + ac.cross( ab_cross_ac) * ab.dot( ab))
-        / (2.0 * ab_cross_ac.dot( ab_cross_ac));
+    let to_circum_circle_center = (ab_cross_ac.cross(ab) * ac.dot(ac)
+        + ac.cross(ab_cross_ac) * ab.dot(ab))
+        / (2.0 * ab_cross_ac.dot(ab_cross_ac));
 
     let circum_circle_center = f.0[0].pos + to_circum_circle_center;
 
-    let height_squared = radius * radius - to_circum_circle_center.dot( to_circum_circle_center);
+    let height_squared = radius * radius - to_circum_circle_center.dot(to_circum_circle_center);
     if height_squared.is_sign_negative() {
         return None;
     }
@@ -205,7 +204,7 @@ fn join<'a>(
     todo!()
 }
 
-fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut Vec<MeshEdge>) {
+fn glue<'a>(a: &'a mut MeshEdge<'a>, b: &'a mut MeshEdge<'a>, front: &mut [MeshEdge]) {
     // Debug here.
 
     // case 1
@@ -217,17 +216,16 @@ fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut Vec<MeshEdge>) {
 
     // case 2
     if a.next == Some(b) && b.prev == Some(a) {
-        // TODO must work out a pattern
-        // a->prev->next = b->next;
-        // b->next->prev = a->prev;
+        a.prev = b.prev;
+        b.next = a.next;
         remove(a);
         remove(b);
         return;
     }
 
     if a.prev == Some(b) && b.next == Some(a) {
-        // a->next->prev = b->prev;
-        // b->prev->next = a->next;
+        a.next = b.next;
+        b.prev = a.next;
         remove(a);
         remove(b);
         return;
@@ -237,12 +235,13 @@ fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut Vec<MeshEdge>) {
     // b->next->prev = a->prev;
     // a->next->prev = b->prev;
     // b->prev->next = a->next;
+    todo!();
     remove(a);
     remove(b);
 }
 
 fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<&'a MeshEdge<'a>> {
-  if let Some(edges) = &edge.b.edges {
+    if let Some(edges) = &edge.b.edges {
         for e in edges.iter() {
             if e.a == edge.a {
                 return Some(*e);
@@ -252,7 +251,7 @@ fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<&'a MeshEdge<'a
     None
 }
 
-pub(crate) fn reconstruct(points: Vec<Point>, radius: f32) -> Option<Vec<Triangle>> {
+pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let grid = Grid::new(&vec![], 0.0);
 
     match find_seed_triangle(&grid, radius) {

@@ -1,11 +1,15 @@
-
-use crate::Point;
-use crate::grid::reconstruct;
-use crate::mesh::MeshFace;
-use crate::mesh::MeshPoint;
+use std::path::PathBuf;
 
 use glam::Vec3;
 
+use crate::Point;
+use crate::Triangle;
+use crate::grid::reconstruct;
+use crate::io::save_points;
+use crate::io::save_triangles;
+use crate::load_xyz;
+use crate::mesh::MeshFace;
+use crate::mesh::MeshPoint;
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
@@ -38,35 +42,54 @@ fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     points
 }
 
-fn measure_reconstruct(points: Vec<Point>, radius: f32) -> Vec<MeshFace<'static>> {
+fn measure_reconstruct(points: &Vec<Point>, radius: f32) -> Option<Vec<Triangle>> {
     let start = std::time::Instant::now();
     let result = reconstruct(points, radius);
     let end = std::time::Instant::now();
     let seconds = (end - start).as_secs_f64();
     // original C++ code uses std::cerr
-    // println!("Points: {}, Triangles: {}, T/s: {}", points.len(), result.len(), result.len() as f64 / seconds);
-
-    todo!()
+    match result {
+        Some(ref mesh) => {
+            println!(
+                "Points: {}, Triangles: {}, T/s: {}",
+                points.len(),
+                mesh.len(),
+                mesh.len() as f64 / seconds
+            );
+            result
+        }
+        None => {
+            println!("No mesh found");
+            None
+        }
+    }
 }
-
-
 
 #[test]
 fn sphere_36_18() {
     let cloud = create_spherical_cloud(36, 18);
-    // save_points("sphere_36_18_cloud.ply", cloud);
-    let mesh = measure_reconstruct(cloud, 0.3f32);
-    assert!(!mesh.is_empty());
-    // save_triangles("sphere_36_18_mesh.stl", mesh);
+    if let Err(e) = save_points(PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
+        eprintln!("Error saving points: {}", e);
+    }
+    let mesh = measure_reconstruct(&cloud, 0.3f32);
+    assert!(mesh.is_some());
+    if let Some(triangles) = mesh {
+        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles);
+    }
 }
 
 #[test]
 fn sphere_100_50() {
     let cloud = create_spherical_cloud(100, 50);
-    // save_points("sphere_100_50_cloud.ply", cloud);
-    let mesh = measure_reconstruct(cloud, 0.1f32);
-    assert!(!mesh.is_empty());
-    // save_triangles("sphere_100_50_mesh.stl", mesh);
+    if let Err(e) = save_points(PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
+        eprintln!("Error saving points: {}", e);
+    }
+    let mesh = measure_reconstruct(&cloud, 0.1f32);
+
+    assert!(mesh.is_some());
+    if let Some(triangles) = mesh {
+        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles);
+    }
 }
 
 #[test]
@@ -89,10 +112,16 @@ fn tetrahedron() {
             normal: Vec3::new(0.0, 0.0, 1.0).normalize(),
         },
     ];
-    // save_points("tetrahedron_cloud.ply", cloud);
-    let mesh = measure_reconstruct(cloud, 2f32);
-    assert!(!mesh.is_empty());
-    // save_triangles("tetrahedron_mesh.stl", mesh);
+
+    if let Err(e) = save_points(PathBuf::from("tetrahedron_cloud.ply"), &cloud) {
+        eprintln!("Error saving points: {}", e);
+    }
+
+    let mesh = measure_reconstruct(&cloud, 2f32);
+    assert!(mesh.is_some());
+    if let Some(triangles) = mesh {
+        save_triangles(&PathBuf::from("tetrahedron_cloud.stl"), &triangles);
+    }
 }
 
 #[test]
@@ -131,10 +160,25 @@ fn cube() {
             normal: Vec3::new(1.0, -1.0, 1.0).normalize(),
         },
     ];
-    // save_points("cube_cloud.ply", cloud);
-    let mesh = measure_reconstruct(cloud, 2f32);
-    assert!(!mesh.is_empty());
-    // save_triangles("cube_mesh.stl", mesh);
 
+    if let Err(e) = save_points(PathBuf::from("cube_cloud.ply"), &cloud) {
+        eprintln!("Error saving points: {}", e);
+    }
 
+    let mesh = measure_reconstruct(&cloud, 2f32);
+    assert!(mesh.is_some());
+    if let Some(triangles) = mesh {
+        save_triangles(&PathBuf::from("cube_mesh.stl"), &triangles);
+    }
+}
+
+#[test]
+fn bunny() {
+    println!("bunny {:#?}", std::env::current_dir());
+    let cloud = load_xyz(&PathBuf::from("./src/test/data/bunny.xyz"));
+    let mesh = measure_reconstruct(&cloud, 0.002f32);
+    assert!(mesh.is_some());
+    if let Some(triangles) = mesh {
+        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles);
+    }
 }

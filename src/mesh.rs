@@ -68,7 +68,7 @@ pub(crate) struct MeshFace<'a>(pub(crate) [MeshPoint<'a>; 3]);
 
 impl MeshFace<'_> {
     pub(crate) fn normal(&self) -> Vec3 {
-        let cross = (self.0[0].pos - self.0[1].pos).cross( self.0[0].pos - self.0[2].pos);
+        let cross = (self.0[0].pos - self.0[1].pos).cross(self.0[0].pos - self.0[2].pos);
         cross.normalize()
     }
 }
