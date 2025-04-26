@@ -202,19 +202,33 @@ fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedResult> {
     None
 }
 
-fn get_active_edge<'a>(front: &'a mut Vec<&MeshEdge>) -> Option<&'a MeshEdge> {
+fn get_active_edge(front: &mut Vec<MeshEdge>) -> Option<MeshEdge> {
     loop {
-        match front.last() {
-            None => return None,
-            Some(edge) => {
-                if edge.status == EdgeStatus::Active {
-                    return Some(edge);
+        {
+            match front.last() {
+                None => {
+                    // exit loop
+                    return None;
                 }
-                // cleanup non-active edges from front
-                front.pop();
+                Some(e) => {
+                    if e.status == EdgeStatus::Active {
+                        return Some(e.clone());
+                    }
+                }
             }
         }
+
+        front.pop();
     }
+}
+
+struct PivotResult{
+  p: MeshPoint,
+  ball_center: Vec3,
+}
+
+fn ball_pivot( e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult> {
+    todo!();
 }
 
 fn not_used(p: &MeshPoint) -> bool {
@@ -230,7 +244,7 @@ fn remove(e: &mut MeshEdge) {
     e.status = EdgeStatus::Inner;
 }
 
-fn output_triangle(f: MeshFace, triangles: &mut Vec<Triangle>) {
+fn output_triangle(f: &MeshFace, triangles: &mut Vec<Triangle>) {
     triangles.push(Triangle([f.0[0].pos, f.0[1].pos, f.0[2].pos]));
 }
 
@@ -242,8 +256,8 @@ fn join(
     edges: &VecDeque<MeshEdge>,
 ) -> (MeshEdge, MeshEdge) {
     // auto& e_ik = edges.emplace_back(MeshEdge{e_ij->a, o_k, e_ij->b, o_k_ballCenter});
-    let mut e_ik = MeshEdge::new(&e_ij.a, &o_k, e_ij.b.clone(), o_k_ball_center);
-    let mut e_kj = MeshEdge::new(&o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
+    let e_ik = MeshEdge::new(&e_ij.a, &o_k, e_ij.b.clone(), o_k_ball_center);
+    let e_kj = MeshEdge::new(&o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
 
     //TODO this will get complicated
 
@@ -264,7 +278,7 @@ fn glue<'a>(a: &'a mut MeshEdge, b: &'a mut MeshEdge, front: &mut [MeshEdge]) {
             save_triangles(&PathBuf::from("glue_front.stl"), &front_triangles);
             save_triangles(
                 &PathBuf::from("glue_edges.stl"),
-                &vec![Triangle([a.a.pos, a.a.pos, a.b.pos])],
+                &[Triangle([a.a.pos, a.a.pos, a.b.pos])],
             );
         }
     }
@@ -338,41 +352,84 @@ pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>
     match find_seed_triangle(&mut grid, radius) {
         None => {
             eprintln!("No seed triangle found");
-            return None;
+            None
         }
-        Some(SeedResult {
-            f: seed,
-            ball_center,
-        }) => {
+        Some(SeedResult { f, ball_center }) => {
             let mut triangles: Vec<Triangle> = Vec::new();
             let edges: VecDeque<MeshEdge> = VecDeque::new();
-            output_triangle(seed, &mut triangles);
+            output_triangle(&f, &mut triangles);
 
             // auto& e0 = edges.emplace_back(MeshEdge{seed[0], seed[1], seed[2], ballCenter});
-            // let e0 = MeshEdge::new(&seed.0[0], &seed.0[1], &seed.0[2], ball_center);
-            // let e1 = MeshEdge::new(&seed.0[1], &seed.0[2], &seed.0[0], ball_center);
-            // TODO must fix
-            // let e2 = MeshEdge::new(&seed.0[2], &seed.0[0], &seed.0[1], ball_center);
+            let seed = f.0;
+            let mut e0 = MeshEdge::new(&seed[0], &seed[1], seed[2].clone(), ball_center);
+            let mut e1 = MeshEdge::new(&seed[1], &seed[2], seed[0].clone(), ball_center);
+            let mut e2 = MeshEdge::new(&seed[2], &seed[0], seed[1].clone(), ball_center);
 
-            // set next and prev
-            todo!();
+            e0.prev = Some(Box::new(e2.clone()));
+            e1.next = Some(Box::new(e2.clone()));
+            e0.next = Some(Box::new(e1.clone()));
+            e2.prev = Some(Box::new(e1.clone()));
+            e1.prev = Some(Box::new(e0.clone()));
+            e2.next = Some(Box::new(e0.clone()));
 
-            // set edges
+            // TODO: Set seed.
 
-            // let front: Vec<&MeshEdge> = vec![&e0, &e1, &e2];
+            let mut front = vec![e0, e1, e2];
+            let debug = true;
+            if debug {
+                save_triangles(&PathBuf::from("seed.stl"), &triangles);
+            }
 
-            // debug save triangles.
+            let debug = true;
+            loop {
+                let e_ij = get_active_edge(&mut front);
+                if e_ij.is_none() {
+                    break;
+                }
 
-            // loop{
-            //   if let Some(e_ij) = get_active_edge(&mut front){
+                if debug {
+                    save_triangles(&PathBuf::from("front.stl"), &triangles);
+                }
 
-            //   } else {
-            //     break;
-            //   }
+                let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
+                if debug {
+                    save_triangles(&PathBuf::from("current_mesh.stl"), &triangles);
+                }
 
-            // }
+                let mut boundary_test = false;
+                if let Some(o_k) = o_k{
+                  if not_used(&o_k.p) || on_front(&o_k.p) {
+                    boundary_test = true;
+
+                    output_triangle(&MeshFace([e_ij.clone().unwrap().a, o_k.p, e_ij.unwrap().b]), &mut triangles);
+
+
+
+                  }
+                }
+                if !boundary_test {
+                  if debug {
+                    // save_points(&PathBuf::from("current_boundary.ply"), &vec![Point::new(o_k.clone().unwrap().p.pos)]);
+                    todo!();
+                  }
+                  todo!();
+                  // e_ij.unwrap().status = EdgeStatus::Boundary;
+                }
+
+            }
+
+            if debug {
+              let mut boundary_edges = vec![];
+
+              for e in front.iter() {
+                if e.status == EdgeStatus::Boundary {
+                  boundary_edges.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
+                }
+              }
+              save_triangles(&PathBuf::from("boundary_edges.stl"), &boundary_edges);
+            }
+            Some(triangles)
         }
+      }
     }
 
-    todo!()
-}

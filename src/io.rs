@@ -7,7 +7,7 @@ use glam::Vec3;
 use crate::{Point, Triangle};
 
 pub(crate) fn save_points(
-    path: PathBuf,
+    path: &PathBuf,
     points: &Vec<Point>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if path.parent().is_some() {
@@ -36,7 +36,7 @@ pub(crate) fn save_points(
         );
         buffer.extend_from_slice(
             &point
-                .normal
+                .normal.unwrap()
                 .to_array()
                 .iter()
                 .flat_map(|f| f.to_le_bytes())
@@ -107,7 +107,7 @@ pub(crate) fn load_xyz(path: &PathBuf) -> Vec<Point> {
         let z: f32 = parts[2].parse().expect("Failed to parse z");
         points.push(Point {
             pos: Vec3::new(x, y, z),
-            normal: Vec3::ZERO,
+            normal: Some(Vec3::ZERO),
         });
     }
     points

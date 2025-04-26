@@ -27,7 +27,13 @@ impl Triangle {
 #[derive(Debug)]
 struct Point {
     pos: Vec3,
-    normal: Vec3,
+    normal: Option<Vec3>,
+}
+
+impl Point {
+    fn new(pos: Vec3) -> Self {
+        Self { pos, normal: None }
+    }
 }
 
 use clap::Parser;

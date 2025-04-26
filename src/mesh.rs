@@ -32,7 +32,7 @@ impl From<&Point> for MeshPoint {
     fn from(point: &Point) -> Self {
         Self {
             pos: point.pos,
-            normal: Some(point.normal),
+            normal: point.normal,
             used: false,
             edges: None,
         }
@@ -72,7 +72,7 @@ impl MeshEdge {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct MeshFace(pub(crate) [MeshPoint; 3]);
 
 impl MeshFace {
