@@ -7,23 +7,26 @@ use crate::mesh::EdgeStatus;
 use crate::mesh::MeshEdge;
 use crate::mesh::MeshFace;
 use crate::mesh::MeshPoint;
+use crate::save_triangles;
 
 use crate::Point;
 use crate::Triangle;
 
-struct Grid<'a> {
+#[derive(Clone, Debug)]
+struct Grid {
     cell_size: f32,
     dims: IVec3,
-    cells: Vec<Cell<'a>>,
+    cells: Vec<Cell>,
     lower: Vec3,
     upper: Vec3,
 }
 
 use std::collections::VecDeque;
 use std::ops::Div;
+use std::path::PathBuf;
 
-impl Grid<'_> {
-    pub fn new(points: &Vec<Point>, radius: f32) -> Self {
+impl Grid {
+    pub fn new(points: &[Point], radius: f32) -> Self {
         let cell_size = 2_f32 * radius;
         let mut lower = points.first().expect("Vec with no points").pos;
         let mut upper = points.first().expect("Vec with no points(2)").pos;
@@ -35,16 +38,15 @@ impl Grid<'_> {
         }
 
         let ceil_float = (upper - lower).ceil().div(cell_size);
-        let ceil: IVec3 = ivec3(
+        let candidate_dim: IVec3 = ivec3(
             ceil_float[0] as i32,
             ceil_float[1] as i32,
             ceil_float[2] as i32,
         );
-        let dims = ceil.max(ivec3(1, 1, 1));
-
+        let dims = candidate_dim.max(ivec3(1, 1, 1));
         let cells = Vec::with_capacity((dims.x * dims.y * dims.z) as usize);
 
-        let grid = Grid {
+        let mut grid = Grid {
             cell_size,
             dims,
             cells,
@@ -53,26 +55,25 @@ impl Grid<'_> {
         };
 
         for p in points {
-            let index = grid.cell_index(p.pos);
-            // grid.cell(index).points.push(p);
+            grid.cell(grid.cell_index(&p.pos)).push(MeshPoint::from(p));
         }
 
         grid
     }
 
-    fn cell_index(&self, point: Vec3) -> IVec3 {
+    fn cell_index(&self, point: &Vec3) -> IVec3 {
         let diff = (point - self.lower) / self.cell_size;
         let index = ivec3(diff.x as i32, diff.y as i32, diff.z as i32);
         index.clamp(ivec3(0, 0, 0), self.dims - 1)
     }
 
-    fn cell(&self, index: IVec3) -> &Cell {
-        let index = index.x * self.dims.x * self.dims.y + index.y * self.dims.x + index.x;
-        &self.cells[index as usize]
+    fn cell(&mut self, index: IVec3) -> &mut Cell {
+        let index = index.z * self.dims.x * self.dims.y + index.y * self.dims.x + index.x;
+        &mut self.cells[index as usize]
     }
 
-    fn spherical_neighborhood(&self, point: &Point, ignore: &IVec3) -> Vec<&MeshPoint<'_>> {
-        let center_index = self.cell_index(point.pos);
+    fn spherical_neighborhood(&mut self, point: &Vec3, ignore: &[Vec3]) -> Vec<MeshPoint> {
+        let center_index = self.cell_index(point);
         // Just an estimate.
         let capacity = self.cell(center_index).len() * 27;
         let mut result = Vec::with_capacity(capacity);
@@ -89,16 +90,19 @@ impl Grid<'_> {
                     {
                         continue;
                     }
-                    if ignore == &index {
-                        continue;
+
+                    // TODO cell_size is defined at the top, to appease the borrow checker
+                    // is this a breaking change from the C++ code?
+                    let cell_size = self.cell_size;
+                    for p in self.cell(index) {
+                        let len = (p.pos - point).length_squared();
+                        if len < cell_size * cell_size {
+                            let find = ignore.iter().find(|&x| *x == p.pos);
+                            if find.is_none() {
+                                result.push(p.clone());
+                            }
+                        }
                     }
-                    let cell = self.cell(index);
-                    todo!();
-                    // for p in cell{
-                    //   if p.pos.distance(point.pos) < point.radius{
-                    //     result.push(p.clone());
-                    //   }
-                    // }
                 }
             }
         }
@@ -108,7 +112,7 @@ impl Grid<'_> {
 
 // from
 // https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d
-pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vec3> {
+pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
     let ac = f.0[2].pos - f.0[0].pos;
     let ab = f.0[1].pos - f.0[0].pos;
     let ab_cross_ac = ab.cross(ac);
@@ -127,7 +131,7 @@ pub(crate) fn compute_ball_center(f: MeshFace, radius: f32) -> Option<Vec3> {
     Some(circum_circle_center + f.normal() * height_squared.sqrt())
 }
 
-fn is_ball_empty(ball_center: Vec3, points: &Vec<MeshPoint>, radius: f32) -> bool {
+fn is_ball_empty(ball_center: &Vec3, points: &[MeshPoint], radius: f32) -> bool {
     !points.iter().any(|p| {
         let length_squared = (p.pos - ball_center).length_squared();
         // TODO epsilon
@@ -135,28 +139,70 @@ fn is_ball_empty(ball_center: Vec3, points: &Vec<MeshPoint>, radius: f32) -> boo
     })
 }
 
-struct SeedResult<'a> {
-    f: MeshFace<'a>,
+struct SeedResult {
+    f: MeshFace,
     ball_center: Vec3,
 }
 
-fn find_seed_triangle<'a>(grid: &Grid<'a>, radius: f32) -> Option<SeedResult<'a>> {
-    for cell in &grid.cells {
-        let avg_normal = cell
+fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedResult> {
+    for c_i in 0..grid.cells.len() {
+        let avg_normal = grid.cells[c_i]
             .iter()
             .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| match p.normal {
                 Some(n) => acc + n,
                 None => acc,
             });
 
-        for p1 in cell.iter() {
-            // auto neighborhood = grid.sphericalNeighborhood(p1.pos, {p1.pos});
+        for i in 0..grid.cells[c_i].len() {
+            let mut neighborhood = grid
+                .clone()
+                .spherical_neighborhood(&grid.cells[c_i][i].pos, &[grid.cells[c_i][i].pos]);
+
+            neighborhood.sort_by(|a, b| {
+                if (a.pos - grid.cells[c_i][i].pos).length_squared()
+                    < (b.pos - grid.cells[c_i][i].pos).length_squared()
+                {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                }
+            });
+
+            for j in 0..neighborhood.len() {
+                for k in 0..neighborhood.len() {
+                    if neighborhood[j] == neighborhood[k] {
+                        continue;
+                    }
+
+                    // only accept triangles which's normal points into the same
+                    // half-space as the average normal of this cell's points
+                    let f = MeshFace([
+                        grid.cells[c_i][i].clone(),
+                        neighborhood[j].clone(),
+                        neighborhood[k].clone(),
+                    ]);
+
+                    if f.normal().dot(avg_normal) < 0.0 {
+                        continue;
+                    }
+                    let ball_center = compute_ball_center(&f, radius);
+                    if let Some(ball_center) = ball_center {
+                        if is_ball_empty(&ball_center, &neighborhood, radius) {
+                            grid.cells[c_i][1].used = true;
+                            (neighborhood[i]).used = true;
+                            (neighborhood[j]).used = true;
+                            (neighborhood[k]).used = true;
+                            return Some(SeedResult { f, ball_center });
+                        }
+                    }
+                }
+            }
         }
     }
-    todo!()
+    None
 }
 
-fn get_active_edge<'a>(front: &'a mut Vec<&MeshEdge<'a>>) -> Option<&'a MeshEdge<'a>> {
+fn get_active_edge<'a>(front: &'a mut Vec<&MeshEdge>) -> Option<&'a MeshEdge> {
     loop {
         match front.last() {
             None => return None,
@@ -188,63 +234,98 @@ fn output_triangle(f: MeshFace, triangles: &mut Vec<Triangle>) {
     triangles.push(Triangle([f.0[0].pos, f.0[1].pos, f.0[2].pos]));
 }
 
-fn join<'a>(
+fn join(
     e_ij: &MeshEdge,
     o_k: MeshPoint,
     o_k_ball_center: Vec3,
-    front: &mut Vec<MeshEdge>,
+    front: &mut [MeshEdge],
     edges: &VecDeque<MeshEdge>,
-) -> (MeshEdge<'a>, MeshEdge<'a>) {
+) -> (MeshEdge, MeshEdge) {
     // auto& e_ik = edges.emplace_back(MeshEdge{e_ij->a, o_k, e_ij->b, o_k_ballCenter});
-    let mut e_ik = MeshEdge::new(e_ij.a, &o_k, e_ij.b, o_k_ball_center);
-    let mut e_kj = MeshEdge::new(&o_k, e_ij.b, e_ij.a, o_k_ball_center);
+    let mut e_ik = MeshEdge::new(&e_ij.a, &o_k, e_ij.b.clone(), o_k_ball_center);
+    let mut e_kj = MeshEdge::new(&o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
 
     //TODO this will get complicated
 
     todo!()
 }
 
-fn glue<'a>(a: &'a mut MeshEdge<'a>, b: &'a mut MeshEdge<'a>, front: &mut [MeshEdge]) {
-    // Debug here.
-
+fn glue<'a>(a: &'a mut MeshEdge, b: &'a mut MeshEdge, front: &mut [MeshEdge]) {
+    // TODO replace this boolean with a proper check
+    let debug = true;
+    if debug {
+        let mut front_triangles = vec![];
+        for e in front.iter() {
+            if e.status == EdgeStatus::Active {
+                // This looks buggy the cpp version repeats e.a.pos.
+                // So a line not a triangle.
+                front_triangles.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
+            }
+            save_triangles(&PathBuf::from("glue_front.stl"), &front_triangles);
+            save_triangles(
+                &PathBuf::from("glue_edges.stl"),
+                &vec![Triangle([a.a.pos, a.a.pos, a.b.pos])],
+            );
+        }
+    }
     // case 1
-    if a.next == Some(b) && a.prev == Some(b) && b.next == Some(a) && b.prev == Some(a) {
-        remove(a);
-        remove(b);
-        return;
+    if let (Some(a_prev), Some(b_next)) = (a.prev.clone(), b.next.clone()) {
+        if a_prev.as_ref() == b && b_next.as_ref() == a {
+            a.next = b.next.clone();
+            b.prev = a.prev.clone();
+            remove(a);
+            remove(b);
+            return;
+        }
     }
 
     // case 2
-    if a.next == Some(b) && b.prev == Some(a) {
-        a.prev = b.prev;
-        b.next = a.next;
-        remove(a);
-        remove(b);
-        return;
+    if let (Some(a_next), Some(b_prev)) = (&a.next, &b.prev) {
+        if a_next.as_ref() == b && b_prev.as_ref() == a {
+            a.prev = b.prev.clone();
+            b.next = a.next.clone();
+            remove(a);
+            remove(b);
+            return;
+        }
     }
 
-    if a.prev == Some(b) && b.next == Some(a) {
-        a.next = b.next;
-        b.prev = a.next;
-        remove(a);
-        remove(b);
-        return;
+    if let (Some(a_prev), Some(b_next)) = (&a.prev, &b.next) {
+        if a_prev.as_ref() == b && b_next.as_ref() == a {
+            a.next = b.next.clone();
+            b.prev = a.prev.clone();
+            remove(a);
+            remove(b);
+            return;
+        }
     }
+
     // case 3/4
     // a->prev->next = b->next;
+    if let Some(a_prev) = &mut a.prev {
+        a_prev.next = b.next.clone();
+    }
     // b->next->prev = a->prev;
+    if let Some(b_next) = &mut b.next {
+        b_next.prev = a.prev.clone();
+    }
     // a->next->prev = b->prev;
+    if let Some(a_next) = &mut a.next {
+        a_next.prev = b.prev.clone();
+    }
     // b->prev->next = a->next;
-    todo!();
+    if let Some(b_prev) = &mut b.prev {
+        b_prev.next = a.next.clone();
+    }
     remove(a);
     remove(b);
 }
 
-fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<&'a MeshEdge<'a>> {
+fn find_reverse_edge_on_front(edge: &MeshEdge) -> Option<MeshEdge> {
     if let Some(edges) = &edge.b.edges {
         for e in edges.iter() {
             if e.a == edge.a {
-                return Some(*e);
+                return Some(e.clone());
             }
         }
     }
@@ -252,9 +333,9 @@ fn find_reverse_edge_on_front<'a>(edge: &MeshEdge<'a>) -> Option<&'a MeshEdge<'a
 }
 
 pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
-    let grid = Grid::new(&vec![], 0.0);
+    let mut grid = Grid::new(points, radius);
 
-    match find_seed_triangle(&grid, radius) {
+    match find_seed_triangle(&mut grid, radius) {
         None => {
             eprintln!("No seed triangle found");
             return None;

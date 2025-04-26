@@ -10,7 +10,7 @@ fn isosceles() {
 
     let f = MeshFace([a, b, c]);
 
-    let center = compute_ball_center(f, 10.0);
+    let center = compute_ball_center(&f, 10.0);
     assert_eq!(center, Some(Vec3::new(5.0, 5.0, 7.07106781)));
 }
 
@@ -22,7 +22,7 @@ fn isosceles_larger_radius() {
 
     let f = MeshFace([a, b, c]);
 
-    let center = compute_ball_center(f, 100.0);
+    let center = compute_ball_center(&f, 100.0);
     assert_eq!(center, Some(Vec3::new(5.0, 5.0, 99.7496872)));
 }
 
@@ -34,7 +34,7 @@ fn equilateral() {
 
     let f = MeshFace([a, b, c]);
 
-    let center = compute_ball_center(f, 10.0);
+    let center = compute_ball_center(&f, 10.0);
     assert_eq!(center, Some(Vec3::new(4.99999952, 2.88675070, 8.16496658)));
 }
 
@@ -46,6 +46,6 @@ fn radius_too_small() {
 
     let f = MeshFace([a, b, c]);
 
-    let center = compute_ball_center(f, 1.0);
+    let center = compute_ball_center(&f, 1.0);
     assert_eq!(center, None);
 }

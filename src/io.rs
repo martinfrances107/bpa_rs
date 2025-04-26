@@ -6,8 +6,10 @@ use glam::Vec3;
 
 use crate::{Point, Triangle};
 
-
-pub(crate) fn save_points(path: PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn std::error::Error>>{
+pub(crate) fn save_points(
+    path: PathBuf,
+    points: &Vec<Point>,
+) -> Result<(), Box<dyn std::error::Error>> {
     if path.parent().is_some() {
         std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
     }

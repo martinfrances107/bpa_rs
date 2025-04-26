@@ -13,7 +13,7 @@ use mesh::MeshPoint;
 
 use io::{load_xyz, save_triangles};
 
-type Cell<'a> = Vec<MeshPoint<'a>>;
+type Cell = Vec<MeshPoint>;
 
 struct Triangle([Vec3; 3]);
 
