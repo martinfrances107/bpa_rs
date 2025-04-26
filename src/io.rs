@@ -36,7 +36,8 @@ pub(crate) fn save_points(
         );
         buffer.extend_from_slice(
             &point
-                .normal.unwrap()
+                .normal
+                .unwrap()
                 .to_array()
                 .iter()
                 .flat_map(|f| f.to_le_bytes())

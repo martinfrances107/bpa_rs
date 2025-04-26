@@ -7,7 +7,7 @@ pub(crate) struct MeshPoint {
     pub(crate) pos: Vec3,
     pub(crate) normal: Option<Vec3>,
     pub(crate) used: bool,
-    pub(crate) edges: Option<Vec<MeshEdge>>,
+    pub(crate) edges: Vec<MeshEdge>,
 }
 
 impl MeshPoint {
@@ -16,16 +16,10 @@ impl MeshPoint {
             pos,
             normal: None,
             used: false,
-            edges: None,
+            edges: vec![],
         }
     }
 
-    pub(crate) fn add_edge(&mut self, edge: &MeshEdge) {
-        match self.edges {
-            Some(ref mut edges) => edges.push(edge.clone()),
-            None => self.edges = Some(vec![edge.clone()]),
-        }
-    }
 }
 
 impl From<&Point> for MeshPoint {
@@ -34,7 +28,7 @@ impl From<&Point> for MeshPoint {
             pos: point.pos,
             normal: point.normal,
             used: false,
-            edges: None,
+            edges: vec![],
         }
     }
 }
