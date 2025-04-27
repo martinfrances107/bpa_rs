@@ -6,7 +6,7 @@ use glam::Vec3;
 
 use crate::{Point, Triangle};
 
-pub(crate) fn save_points(
+pub  fn save_points(
     path: &PathBuf,
     points: &Vec<Point>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -52,7 +52,7 @@ pub(crate) fn save_points(
     Ok(())
 }
 
-pub(crate) fn save_triangles(path: &PathBuf, triangles: &[Triangle]) {
+pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) {
     if path.parent().is_some() {
         std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
     }
@@ -94,7 +94,7 @@ pub(crate) fn save_triangles(path: &PathBuf, triangles: &[Triangle]) {
     file.sync_all().expect("Failed to sync file");
 }
 
-pub(crate) fn load_xyz(path: &PathBuf) -> Vec<Point> {
+pub fn load_xyz(path: &PathBuf) -> Vec<Point> {
     let file = std::fs::File::open(path).expect("Failed to open file");
     let reader = std::io::BufReader::new(file);
     let mut points = Vec::new();

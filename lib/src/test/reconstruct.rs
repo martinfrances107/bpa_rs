@@ -4,10 +4,10 @@ use glam::Vec3;
 
 use crate::Point;
 use crate::Triangle;
-use crate::grid::reconstruct;
+use crate::reconstruct;
 use crate::io::save_points;
 use crate::io::save_triangles;
-use crate::load_xyz;
+use crate::io::load_xyz;
 use crate::mesh::MeshFace;
 use crate::mesh::MeshPoint;
 

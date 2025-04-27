@@ -1,12 +1,17 @@
-[package]
-name = "bpa_rs"
+[workspace]
+members = [
+  "./lib",
+  "./driver"
+]
+resolver = "2"
+default-members = ["./lib"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 description = "A Rust implementation of the Binary Partitioning Algorithm (BPA) for 3D point cloud data."
 license = "MIT"
 authors = ["Martin Frances<martinfrances107@hotmail.com>"]
 
-[dependencies]
-clap = {version = "4.5.37", features = ["derive"]}
-glam = "0.30.2"
+
 

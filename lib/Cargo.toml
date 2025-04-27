@@ -1,0 +1,13 @@
+[package]
+name = "bpa_rs"
+edition = {workspace=true}
+version = {workspace=true}
+description = "A Rust implementation of the Binary Partitioning Algorithm (BPA) for 3D point cloud data."
+license = {workspace=true}
+authors = ["Martin Frances<martinfrances107@hotmail.com>"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+glam = "0.30.2"

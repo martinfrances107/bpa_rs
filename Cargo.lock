@@ -56,7 +56,6 @@ dependencies = [
 name = "bpa_rs"
 version = "0.1.0"
 dependencies = [
- "clap",
  "glam",
 ]
 
@@ -163,6 +162,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "tmp_bin"
+version = "0.1.0"
+dependencies = [
+ "bpa_rs",
+ "clap",
 ]
 
 [[package]]
