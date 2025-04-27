@@ -19,7 +19,6 @@ impl MeshPoint {
             edges: vec![],
         }
     }
-
 }
 
 impl From<&Point> for MeshPoint {

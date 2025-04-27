@@ -8,8 +8,9 @@ use std::path::PathBuf;
 
 use clap::arg;
 use glam::Vec3;
-use grid::reconstruct;
 use mesh::MeshPoint;
+
+use crate::grid::reconstruct;
 
 use io::{load_xyz, save_triangles};
 
@@ -61,8 +62,8 @@ fn main() {
     let points = load_xyz(&args.input);
 
     match reconstruct(&points, args.radius) {
-        Some(mesh) => {
-            save_triangles(&output, &mesh);
+        Some(triangles) => {
+            save_triangles(&output, &triangles);
         }
         None => {
             eprintln!("Exception occurred reconstructing the surface");

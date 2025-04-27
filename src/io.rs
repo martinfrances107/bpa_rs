@@ -10,9 +10,10 @@ pub(crate) fn save_points(
     path: &PathBuf,
     points: &Vec<Point>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if path.parent().is_some() {
+    if path.parent().is_none() {
         std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
     }
+
     let mut file = std::fs::File::create(path).expect("Failed to create file");
     writeln!(file, "ply")?;
     writeln!(file, "format binary_little_endian 1.0")?;

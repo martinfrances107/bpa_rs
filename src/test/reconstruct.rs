@@ -14,7 +14,7 @@ use crate::mesh::MeshPoint;
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
         pos: Vec3::new(0.0, 0.0, -1.0),
-        normal: Vec3::new(0.0, 0.0, -1.0),
+        normal: Some(Vec3::new(0.0, 0.0, -1.0)),
     }];
 
     for slice in 0..slices {
@@ -30,13 +30,13 @@ fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
             // This makes no sense, but the original C++ code does this
             // could there be a implicit clone?.
             let normal = pos - Vec3::new(0.0, 0.0, -1.0).normalize();
-            points.push(Point { pos, normal });
+            points.push(Point { pos, normal: Some(normal) });
         }
     }
 
     points.push(Point {
         pos: Vec3::new(0.0, 0.0, 1.0),
-        normal: Vec3::new(0.0, 0.0, 1.0),
+        normal: Some(Vec3::new(0.0, 0.0, 1.0)),
     });
 
     points
@@ -68,7 +68,7 @@ fn measure_reconstruct(points: &Vec<Point>, radius: f32) -> Option<Vec<Triangle>
 #[test]
 fn sphere_36_18() {
     let cloud = create_spherical_cloud(36, 18);
-    if let Err(e) = save_points(PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
+    if let Err(e) = save_points(&PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
     let mesh = measure_reconstruct(&cloud, 0.3f32);
@@ -81,7 +81,7 @@ fn sphere_36_18() {
 #[test]
 fn sphere_100_50() {
     let cloud = create_spherical_cloud(100, 50);
-    if let Err(e) = save_points(PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
+    if let Err(e) = save_points(&PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
     let mesh = measure_reconstruct(&cloud, 0.1f32);

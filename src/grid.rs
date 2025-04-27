@@ -1,8 +1,16 @@
+use core::f32;
+use core::panic;
+use std::collections::VecDeque;
+use std::ops::Div;
+use std::path::PathBuf;
+use std::vec;
+
 use glam::IVec3;
 use glam::Vec3;
 use glam::ivec3;
 
 use crate::Cell;
+use crate::io::save_points;
 use crate::mesh::EdgeStatus;
 use crate::mesh::MeshEdge;
 use crate::mesh::MeshFace;
@@ -20,11 +28,6 @@ struct Grid {
     lower: Vec3,
     upper: Vec3,
 }
-
-use core::panic;
-use std::collections::VecDeque;
-use std::ops::Div;
-use std::path::PathBuf;
 
 impl Grid {
     pub fn new(points: &[Point], radius: f32) -> Self {
@@ -132,7 +135,7 @@ pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
     Some(circum_circle_center + f.normal() * height_squared.sqrt())
 }
 
-fn is_ball_empty(ball_center: &Vec3, points: &[MeshPoint], radius: f32) -> bool {
+fn ball_is_empty(ball_center: &Vec3, points: &[MeshPoint], radius: f32) -> bool {
     !points.iter().any(|p| {
         let length_squared = (p.pos - ball_center).length_squared();
         // TODO epsilon
@@ -188,7 +191,7 @@ fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedResult> {
                     }
                     let ball_center = compute_ball_center(&f, radius);
                     if let Some(ball_center) = ball_center {
-                        if is_ball_empty(&ball_center, &neighborhood, radius) {
+                        if ball_is_empty(&ball_center, &neighborhood, radius) {
                             grid.cells[c_i][1].used = true;
                             (neighborhood[i]).used = true;
                             (neighborhood[j]).used = true;
@@ -228,8 +231,164 @@ struct PivotResult {
     ball_center: Vec3,
 }
 
+thread_local! {
+  static COUNTER: std::cell::Cell<i32> = const { std::cell::Cell::new(0) };
+  static COUNTER2: std::cell::Cell<i32> = const { std::cell::Cell::new(0) };
+}
+
 fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult> {
-    todo!();
+    let m = (e.a.pos + e.b.pos) / 2.0;
+    let old_center_vec = (e.center - m).normalize();
+
+    let mut neighborhood = grid.spherical_neighborhood(&m, &[e.a.pos, e.b.pos, e.opposite.pos]);
+
+    if let Err(e) = COUNTER.try_with(|counter| {
+        counter.set(counter.get() + 1);
+    }) {
+        // Elsewhere COUNTER's destructor has been called!!!``
+        eprintln!("Access error incrementing debug counter: {:?}", e);
+    };
+
+    println!("counter {COUNTER:?}");
+    let debug = true;
+    if debug {
+        save_triangles(
+            &PathBuf::from(format!("{:?}_pivot_edge.stl", COUNTER)),
+            &[Triangle([e.a.pos, e.b.pos, e.opposite.pos])],
+        );
+
+        let mut points = Vec::with_capacity(neighborhood.len());
+        for n in &neighborhood {
+            points.push(Point::new(n.pos))
+        }
+        // save_points(&PathBuf::from(format!("{}_neighbor.ply", counter)), &points)
+        //     .expect("Failed to save points");
+    }
+
+    let mut small_angle = f32::MAX;
+    let mut points_with_small_angle = None;
+    let mut center_of_smallest = Vec3::ZERO;
+    let mut ss = String::new();
+
+    if debug {
+        println!(
+            "{COUNTER:?}.pivoting edge a={} b={} op={}. testing {} neighbors",
+            e.a.pos,
+            e.b.pos,
+            e.opposite.pos,
+            neighborhood.len()
+        );
+    }
+
+    let mut i = 0;
+    let mut smallest_number = 0;
+    for p in &neighborhood {
+        i = i + 1;
+        let new_face_normal = Triangle([e.a.pos, e.b.pos, p.pos]).normal();
+
+        // this check is not in the paper: all points' normals must point into the
+        // same half-space
+        if p.normal.is_some_and(|n| n.dot(new_face_normal) < 0.0) {
+            continue;
+        }
+
+        let c = match compute_ball_center(&MeshFace([e.b.clone(), e.a.clone(), p.clone()]), radius)
+        {
+            Some(c) => c,
+            None => {
+                if debug {
+                    ss.push_str(&format!("{i}.     {:?} center computation failed\n", p.pos));
+                }
+                continue;
+            }
+        };
+
+        if debug {
+            if let Err(e) = COUNTER2.try_with(|counter2| {
+                counter2.set(counter2.get() + 1);
+            }) {
+                // Elsewhere COUNTER2's destructor has been called!!!``
+                eprintln!("Access error incrementing debug counter: {:?}", e);
+            };
+            save_triangles(
+                &PathBuf::from(format!("{:?}_face.stl", COUNTER2)),
+                &[Triangle([e.a.pos, e.b.pos, p.pos])],
+            );
+            save_points(
+                &PathBuf::from(format!("{:?}_ball_center.ply", COUNTER2)),
+                &vec![Point::new(c)],
+            )
+            .expect("Failed to save points");
+        }
+
+        // this check is not in the paper: the ball center must always be above the
+        // triangle
+        let new_center_vec = (c - m).normalize();
+        let new_center_face_dot = (new_center_vec).dot(new_face_normal);
+        if new_center_face_dot < 0_f32 {
+            if debug {
+                // ss << i << ".    " << p->pos << " ball center " << c.value() << " underneath triangle\n";
+                ss.push_str(&format!(
+                    "{i}.    {:?} ball center {:?} underneath triangle\n",
+                    p.pos, c
+                ));
+                continue;
+            }
+
+            // this check is not in the paper: points to which we already have an inner
+            // edge are not considered
+            // for (const auto* ee : p->edges) {
+            for ee in &p.edges {
+                // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
+                let other_point = if ee.a == p.clone() { &ee.b } else { &ee.a };
+                if ee.status == EdgeStatus::Inner && *other_point == e.a || *other_point == e.b {
+                    if debug {
+                        ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.pos));
+                    }
+                    todo!();
+                    // goto nextneighbor;
+                }
+            }
+
+            {
+                let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
+                if new_center_vec.cross(old_center_vec).dot(e.a.pos - e.b.pos) < 0.0_f32 {
+                    angle += std::f32::consts::PI;
+                }
+                if angle < small_angle {
+                    small_angle = angle;
+                    points_with_small_angle = Some(p.clone());
+                    center_of_smallest = c;
+                    smallest_number = i;
+                }
+
+                if debug {
+                    ss.push_str(&format!(
+                        "{i}.   {}  center {:?}  angle {:?} next center face dot {}\n",
+                        p.pos, c, angle, new_center_face_dot
+                    ));
+                }
+            }
+
+            if small_angle != f32::MAX {
+                if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
+                    if debug {
+                        ss.push_str(&format!("       picking point {smallest_number}\n"));
+                    }
+                    return Some(PivotResult {
+                        p: points_with_small_angle.unwrap(),
+                        ball_center: center_of_smallest,
+                    });
+                } else if debug {
+                    ss.push_str(&format!(
+                        "found candidate {} but bail is not empty \n",
+                        smallest_number
+                    ));
+                }
+            }
+        }
+    }
+     None
 }
 
 fn not_used(p: &MeshPoint) -> bool {
@@ -241,6 +400,7 @@ fn on_front(_p: &MeshPoint) -> bool {
     todo!();
 }
 
+// Removed edge from consideration
 fn remove(e: &mut MeshEdge) {
     e.status = EdgeStatus::Inner;
 }
@@ -255,39 +415,34 @@ fn join(
     o_k_ball_center: Vec3,
     front: &mut [MeshEdge],
     edges: &VecDeque<MeshEdge>,
-) -> (MeshEdge, MeshEdge) {
+)  {
     // auto& e_ik = edges.emplace_back(MeshEdge{e_ij->a, o_k, e_ij->b, o_k_ballCenter});
     let mut e_ik = MeshEdge::new(&e_ij.a, &o_k, e_ij.b.clone(), o_k_ball_center);
     let mut e_kj = MeshEdge::new(&o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
 
     // e_ik
     e_ik.next = Some(Box::new(e_kj.clone()));
-    e_ik.prev = e_ik.prev;
+    e_ik.prev = e_ij.prev.clone();
     match &mut e_ij.prev {
         Some(prev) => prev.next = Some(Box::new(e_ik.clone())),
         None => panic!("e_ij.prev is None"),
     }
-    match &mut e_ij.a {
-        MeshPoint { edges, .. } => edges.push(e_ik.clone()),
-        _ => panic!("e_ij.a.edges is None"),
-    }
+    e_ij.a.edges.push(e_ik.clone());
 
     // e_kj
     e_kj.prev = Some(Box::new(e_ik.clone()));
     e_kj.next = e_ij.next.clone();
     match &mut e_ij.next {
-        Some(next) => next.prev = Some(Box::new(e_ik.clone())),
+        Some(next) => next.prev = Some(Box::new(e_kj.clone())),
         None => panic!("e_ij.prev is None"),
     }
-    match &mut e_ij.b {
-        MeshPoint { edges, .. } => edges.push(e_kj.clone()),
-        _ => panic!("e_ij.a.edges is None"),
-    }
+    e_ij.b.edges.push(e_kj.clone());
 
     o_k.used = true;
     o_k.edges.push(e_ik.clone());
+    o_k.edges.push(e_kj);
 
-    todo!();
+    remove(e_ij);
 }
 
 fn glue<'a>(a: &'a mut MeshEdge, b: &'a mut MeshEdge, front: &mut [MeshEdge]) {
@@ -421,19 +576,19 @@ pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>
                 }
 
                 let mut boundary_test = false;
-                if let Some(o_k) = o_k {
+                if let Some(o_k) = &o_k {
                     if not_used(&o_k.p) || on_front(&o_k.p) {
                         boundary_test = true;
 
                         output_triangle(
-                            &MeshFace([e_ij.clone().unwrap().a, o_k.p, e_ij.unwrap().b]),
+                            &MeshFace([e_ij.clone().unwrap().a, o_k.p.clone(), e_ij.unwrap().b]),
                             &mut triangles,
                         );
                     }
                 }
                 if !boundary_test {
                     if debug {
-                        // save_points(&PathBuf::from("current_boundary.ply"), &vec![Point::new(o_k.clone().unwrap().p.pos)]);
+                        save_points(&PathBuf::from("current_boundary.ply"), &vec![Point::new(o_k.unwrap().p.pos)]).expect("could not save current boundary");
                         todo!();
                     }
                     todo!();
