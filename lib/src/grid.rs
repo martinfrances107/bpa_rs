@@ -47,7 +47,7 @@ impl Grid {
             ceil_float[2] as i32,
         );
         let dims = candidate_dim.max(ivec3(1, 1, 1));
-        let cells = vec![Cell::default();(dims.x * dims.y * dims.z) as usize];
+        let cells = vec![Cell::default(); (dims.x * dims.y * dims.z) as usize];
 
         let mut grid = Grid {
             cell_size,
@@ -529,4 +529,3 @@ pub(crate) fn find_reverse_edge_on_front(edge: &MeshEdge) -> Option<MeshEdge> {
     }
     None
 }
-

@@ -7,23 +7,22 @@ mod test;
 use std::path::PathBuf;
 
 use glam::Vec3;
+use grid::Grid;
+use grid::SeedResult;
 use grid::ball_pivot;
 use grid::find_reverse_edge_on_front;
+use grid::find_seed_triangle;
 use grid::get_active_edge;
 use grid::glue;
 use grid::join;
 use grid::not_used;
 use grid::on_front;
 use grid::output_triangle;
-use grid::SeedResult;
 use io::save_points;
 use mesh::EdgeStatus;
+use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
-use mesh::MeshEdge;
-use grid::Grid;
-use grid::find_seed_triangle;
-
 
 use io::save_triangles;
 
@@ -50,7 +49,7 @@ impl Point {
     }
 }
 
-pub  fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
+pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let mut grid = Grid::new(points, radius);
 
     match find_seed_triangle(&mut grid, radius) {

@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use clap::arg;
-use clap::Parser;
-use bpa_rs::reconstruct;
 use bpa_rs::io::load_xyz;
 use bpa_rs::io::save_triangles;
+use bpa_rs::reconstruct;
+use clap::Parser;
+use clap::arg;
 
 #[derive(Parser, Debug)]
 struct Cli {

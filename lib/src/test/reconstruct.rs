@@ -4,12 +4,12 @@ use glam::Vec3;
 
 use crate::Point;
 use crate::Triangle;
-use crate::reconstruct;
+use crate::io::load_xyz;
 use crate::io::save_points;
 use crate::io::save_triangles;
-use crate::io::load_xyz;
 use crate::mesh::MeshFace;
 use crate::mesh::MeshPoint;
+use crate::reconstruct;
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
