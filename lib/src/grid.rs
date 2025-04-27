@@ -47,7 +47,7 @@ impl Grid {
             ceil_float[2] as i32,
         );
         let dims = candidate_dim.max(ivec3(1, 1, 1));
-        let cells = Vec::with_capacity((dims.x * dims.y * dims.z) as usize);
+        let cells = vec![Cell::default();(dims.x * dims.y * dims.z) as usize];
 
         let mut grid = Grid {
             cell_size,
@@ -248,11 +248,11 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
         eprintln!("Access error incrementing debug counter: {:?}", e);
     };
 
-    println!("counter {COUNTER:?}");
+    println!("counter {}", COUNTER.get());
     let debug = true;
     if debug {
         save_triangles(
-            &PathBuf::from(format!("{:?}_pivot_edge.stl", COUNTER)),
+            &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
             &[Triangle([e.a.pos, e.b.pos, e.opposite.pos])],
         );
 
@@ -271,7 +271,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
     if debug {
         println!(
-            "{COUNTER:?}.pivoting edge a={} b={} op={}. testing {} neighbors",
+            "{}.pivoting edge a={} b={} op={}. testing {} neighbors",
+            COUNTER.get(),
             e.a.pos,
             e.b.pos,
             e.opposite.pos,
@@ -310,11 +311,11 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                 eprintln!("Access error incrementing debug counter: {:?}", e);
             };
             save_triangles(
-                &PathBuf::from(format!("{:?}_face.stl", COUNTER2)),
+                &PathBuf::from(format!("{}_face.stl", COUNTER2.get())),
                 &[Triangle([e.a.pos, e.b.pos, p.pos])],
             );
             save_points(
-                &PathBuf::from(format!("{:?}_ball_center.ply", COUNTER2)),
+                &PathBuf::from(format!("{}_ball_center.ply", COUNTER2.get())),
                 &vec![Point::new(c)],
             )
             .expect("Failed to save points");

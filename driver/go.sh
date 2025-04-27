@@ -1,2 +1,3 @@
 !# /usr/bin/bash
-cargo run -- -i ./src/test/data/bunny.xyz -r 2
+rm *.ply *.stl
+cargo run -- -i ../data/bunny.xyz -r 2
