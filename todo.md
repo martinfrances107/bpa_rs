@@ -2,18 +2,14 @@
 
 ## Reconstruction test?
 
-Are generator functions producing the correct result
+debug tetrahedral first
 
-Implement save_triangles ?
+Strategies for handling lifetimes?
 
-Not all test use the generators
-What can I learn from that.
-
-why is tetrhedral failing?
-
-## Binary
- Install clap and make main function work
+keep points in the same lifetime as Grid
+keep all Vec<Verticies> in grid etc...
 
 ## Misc
 
-copy over stanford bunny.
+TODO set seed issue...
+fix goto
