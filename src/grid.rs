@@ -394,9 +394,8 @@ fn not_used(p: &MeshPoint) -> bool {
     !p.used
 }
 
-fn on_front(_p: &MeshPoint) -> bool {
-    // p.edges.iter().any(|e| e.status == EdgeStatus::Active)
-    todo!();
+fn on_front(p: &MeshPoint) -> bool {
+    p.edges.iter().any(|e| e.status == EdgeStatus::Active)
 }
 
 // Removed edge from consideration
