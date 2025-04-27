@@ -30,7 +30,10 @@ fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
             // This makes no sense, but the original C++ code does this
             // could there be a implicit clone?.
             let normal = pos - Vec3::new(0.0, 0.0, -1.0).normalize();
-            points.push(Point { pos, normal: Some(normal) });
+            points.push(Point {
+                pos,
+                normal: Some(normal),
+            });
         }
     }
 
@@ -97,23 +100,23 @@ fn tetrahedron() {
     let cloud = vec![
         Point {
             pos: Vec3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(-1.0, -1.0, -1.0).normalize(),
+            normal: Some(Vec3::new(-1.0, -1.0, -1.0).normalize()),
         },
         Point {
             pos: Vec3::new(0.0, 1.0, 0.0),
-            normal: Vec3::new(0.0, 1.0, 0.0).normalize(),
+            normal: Some(Vec3::new(0.0, 1.0, 0.0).normalize()),
         },
         Point {
             pos: Vec3::new(1.0, 0.0, 0.0),
-            normal: Vec3::new(1.0, 0.0, 0.0).normalize(),
+            normal: Some(Vec3::new(1.0, 0.0, 0.0).normalize()),
         },
         Point {
             pos: Vec3::new(0.0, 0.0, 1.0),
-            normal: Vec3::new(0.0, 0.0, 1.0).normalize(),
+            normal: Some(Vec3::new(0.0, 0.0, 1.0).normalize()),
         },
     ];
 
-    if let Err(e) = save_points(PathBuf::from("tetrahedron_cloud.ply"), &cloud) {
+    if let Err(e) = save_points(&PathBuf::from("tetrahedron_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
 
@@ -129,39 +132,39 @@ fn cube() {
     let cloud = vec![
         Point {
             pos: Vec3::new(-1.0, -1.0, -1.0),
-            normal: Vec3::new(-1.0, -1.0, -1.0).normalize(),
+            normal: Some(Vec3::new(-1.0, -1.0, -1.0).normalize()),
         },
         Point {
             pos: Vec3::new(-1.0, 1.0, -1.0),
-            normal: Vec3::new(-1.0, 1.0, -1.0).normalize(),
+            normal: Some(Vec3::new(-1.0, 1.0, -1.0).normalize()),
         },
         Point {
             pos: Vec3::new(1.0, 1.0, -1.0),
-            normal: Vec3::new(1.0, 1.0, -1.0).normalize(),
+            normal: Some(Vec3::new(1.0, 1.0, -1.0).normalize()),
         },
         Point {
             pos: Vec3::new(1.0, -1.0, -1.0),
-            normal: Vec3::new(1.0, -1.0, -1.0).normalize(),
+            normal: Some(Vec3::new(1.0, -1.0, -1.0).normalize()),
         },
         Point {
             pos: Vec3::new(-1.0, -1.0, 1.0),
-            normal: Vec3::new(-1.0, -1.0, 1.0).normalize(),
+            normal: Some(Vec3::new(-1.0, -1.0, 1.0).normalize()),
         },
         Point {
             pos: Vec3::new(-1.0, 1.0, 1.0),
-            normal: Vec3::new(-1.0, 1.0, 1.0).normalize(),
+            normal: Some(Vec3::new(-1.0, 1.0, 1.0).normalize()),
         },
         Point {
             pos: Vec3::new(1.0, 1.0, 1.0),
-            normal: Vec3::new(1.0, 1.0, 1.0).normalize(),
+            normal: Some(Vec3::new(1.0, 1.0, 1.0).normalize()),
         },
         Point {
             pos: Vec3::new(1.0, -1.0, 1.0),
-            normal: Vec3::new(1.0, -1.0, 1.0).normalize(),
+            normal: Some(Vec3::new(1.0, -1.0, 1.0).normalize()),
         },
     ];
 
-    if let Err(e) = save_points(PathBuf::from("cube_cloud.ply"), &cloud) {
+    if let Err(e) = save_points(&PathBuf::from("cube_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
 

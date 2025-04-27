@@ -1,6 +1,5 @@
 use core::f32;
 use core::panic;
-use std::collections::VecDeque;
 use std::ops::Div;
 use std::path::PathBuf;
 use std::vec;
@@ -228,7 +227,7 @@ fn get_active_edge(front: &mut Vec<MeshEdge>) -> Option<MeshEdge> {
 
 struct PivotResult {
     p: MeshPoint,
-    ball_center: Vec3,
+    center: Vec3,
 }
 
 thread_local! {
@@ -240,7 +239,7 @@ fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult>
     let m = (e.a.pos + e.b.pos) / 2.0;
     let old_center_vec = (e.center - m).normalize();
 
-    let mut neighborhood = grid.spherical_neighborhood(&m, &[e.a.pos, e.b.pos, e.opposite.pos]);
+    let neighborhood = grid.spherical_neighborhood(&m, &[e.a.pos, e.b.pos, e.opposite.pos]);
 
     if let Err(e) = COUNTER.try_with(|counter| {
         counter.set(counter.get() + 1);
@@ -283,7 +282,7 @@ fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult>
     let mut i = 0;
     let mut smallest_number = 0;
     for p in &neighborhood {
-        i = i + 1;
+        i += i;
         let new_face_normal = Triangle([e.a.pos, e.b.pos, p.pos]).normal();
 
         // this check is not in the paper: all points' normals must point into the
@@ -377,7 +376,7 @@ fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult>
                     }
                     return Some(PivotResult {
                         p: points_with_small_angle.unwrap(),
-                        ball_center: center_of_smallest,
+                        center: center_of_smallest,
                     });
                 } else if debug {
                     ss.push_str(&format!(
@@ -388,7 +387,7 @@ fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult>
             }
         }
     }
-     None
+    None
 }
 
 fn not_used(p: &MeshPoint) -> bool {
@@ -413,12 +412,14 @@ fn join(
     e_ij: &mut MeshEdge,
     o_k: &mut MeshPoint,
     o_k_ball_center: Vec3,
-    front: &mut [MeshEdge],
-    edges: &VecDeque<MeshEdge>,
-)  {
+    front: &mut Vec<MeshEdge>,
+    edges: &mut Vec<MeshEdge>,
+) -> (MeshEdge, MeshEdge) {
     // auto& e_ik = edges.emplace_back(MeshEdge{e_ij->a, o_k, e_ij->b, o_k_ballCenter});
-    let mut e_ik = MeshEdge::new(&e_ij.a, &o_k, e_ij.b.clone(), o_k_ball_center);
-    let mut e_kj = MeshEdge::new(&o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
+    let mut e_ik = MeshEdge::new(&e_ij.a, o_k, e_ij.b.clone(), o_k_ball_center);
+    edges.push(e_ik.clone());
+    let mut e_kj = MeshEdge::new(o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
+    edges.push(e_kj.clone());
 
     // e_ik
     e_ik.next = Some(Box::new(e_kj.clone()));
@@ -440,12 +441,16 @@ fn join(
 
     o_k.used = true;
     o_k.edges.push(e_ik.clone());
-    o_k.edges.push(e_kj);
+    o_k.edges.push(e_kj.clone());
 
+    front.push(e_ik.clone());
+    front.push(e_kj.clone());
     remove(e_ij);
+
+    (e_ik, e_kj)
 }
 
-fn glue<'a>(a: &'a mut MeshEdge, b: &'a mut MeshEdge, front: &mut [MeshEdge]) {
+fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut [MeshEdge]) {
     // TODO replace this boolean with a proper check
     let debug = true;
     if debug {
@@ -535,7 +540,7 @@ pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>
         }
         Some(SeedResult { f, ball_center }) => {
             let mut triangles: Vec<Triangle> = Vec::new();
-            let edges: VecDeque<MeshEdge> = VecDeque::new();
+            let mut edges: Vec<MeshEdge> = Vec::new();
             output_triangle(&f, &mut triangles);
 
             // auto& e0 = edges.emplace_back(MeshEdge{seed[0], seed[1], seed[2], ballCenter});
@@ -581,14 +586,38 @@ pub(crate) fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>
                         boundary_test = true;
 
                         output_triangle(
-                            &MeshFace([e_ij.clone().unwrap().a, o_k.p.clone(), e_ij.unwrap().b]),
+                            &MeshFace([
+                                e_ij.clone().unwrap().a,
+                                o_k.p.clone(),
+                                e_ij.clone().unwrap().b,
+                            ]),
                             &mut triangles,
                         );
+
+                        let (mut e_ik, mut e_kj) = join(
+                            &mut e_ij.unwrap(),
+                            &mut o_k.p.clone(),
+                            o_k.center,
+                            &mut front,
+                            &mut edges,
+                        );
+
+                        if let Some(mut e_ki) = find_reverse_edge_on_front(&e_ik) {
+                            glue(&mut e_ik, &mut e_ki, &mut front);
+                        }
+
+                        if let Some(mut e_jk) = find_reverse_edge_on_front(&e_kj) {
+                            glue(&mut e_kj, &mut e_jk, &mut front)
+                        }
                     }
                 }
                 if !boundary_test {
                     if debug {
-                        save_points(&PathBuf::from("current_boundary.ply"), &vec![Point::new(o_k.unwrap().p.pos)]).expect("could not save current boundary");
+                        save_points(
+                            &PathBuf::from("current_boundary.ply"),
+                            &vec![Point::new(o_k.unwrap().p.pos)],
+                        )
+                        .expect("could not save current boundary");
                         todo!();
                     }
                     todo!();
