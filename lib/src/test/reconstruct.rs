@@ -76,7 +76,8 @@ fn sphere_36_18() {
     let mesh = measure_reconstruct(&cloud, 0.3f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles).expect("failed to write to sphere_36_18_mesh");
+        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles)
+            .expect("failed to write to sphere_36_18_mesh");
     }
 }
 
@@ -90,7 +91,8 @@ fn sphere_100_50() {
 
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles).expect("failed to write to sphere_100_50_mesh");
+        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles)
+            .expect("failed to write to sphere_100_50_mesh");
     }
 }
 
@@ -122,7 +124,8 @@ fn tetrahedron() {
     let mesh = measure_reconstruct(&cloud, 2f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles_ascii(&PathBuf::from("tetrahedron_cloud.stl"), &triangles).expect("failed to save tetrahedron_cloud");
+        save_triangles_ascii(&PathBuf::from("tetrahedron_cloud.stl"), &triangles)
+            .expect("failed to save tetrahedron_cloud");
     }
 }
 
@@ -170,7 +173,8 @@ fn cube() {
     let mesh = measure_reconstruct(&cloud, 2f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles_ascii(&PathBuf::from("cube_mesh.stl"), &triangles).expect("could not output cube_mesh.stl");
+        save_triangles_ascii(&PathBuf::from("cube_mesh.stl"), &triangles)
+            .expect("could not output cube_mesh.stl");
     }
 }
 
@@ -181,6 +185,7 @@ fn bunny() {
     let mesh = measure_reconstruct(&cloud, 0.002f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles).expect("Failed to save bunny.stl");
+        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles)
+            .expect("Failed to save bunny.stl");
     }
 }
