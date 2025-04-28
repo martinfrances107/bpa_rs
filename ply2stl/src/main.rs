@@ -1,3 +1,14 @@
+#![deny(clippy::all)]
+#![warn(clippy::cargo)]
+#![warn(clippy::complexity)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![warn(clippy::perf)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
+#![allow(clippy::many_single_char_names)]
+#![doc = include_str!("../../README.md")]
+
 use std::path::PathBuf;
 
 use bpa_rs::io::load_xyz;
@@ -7,6 +18,7 @@ use clap::Parser;
 use clap::arg;
 
 #[derive(Parser, Debug)]
+#[command(version, about, long_about)]
 struct Cli {
     #[arg(long = "input", short = 'i', help = "point cloud file")]
     input: PathBuf,
