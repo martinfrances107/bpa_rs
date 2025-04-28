@@ -10,11 +10,11 @@ use glam::ivec3;
 
 use crate::Cell;
 use crate::io::save_points;
+use crate::io::save_triangles_ascii;
 use crate::mesh::EdgeStatus;
 use crate::mesh::MeshEdge;
 use crate::mesh::MeshFace;
 use crate::mesh::MeshPoint;
-use crate::save_triangles;
 
 use crate::Point;
 use crate::Triangle;
@@ -251,10 +251,11 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     println!("counter {}", COUNTER.get());
     let debug = true;
     if debug {
-        save_triangles(
+        save_triangles_ascii(
             &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
             &[Triangle([e.a.pos, e.b.pos, e.opposite.pos])],
-        );
+        )
+        .expect("Err - writing to pivot_edge");
 
         let mut points = Vec::with_capacity(neighborhood.len());
         for n in &neighborhood {
@@ -310,15 +311,16 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                 // Elsewhere COUNTER2's destructor has been called!!!``
                 eprintln!("Access error incrementing debug counter: {:?}", e);
             };
-            save_triangles(
+            save_triangles_ascii(
                 &PathBuf::from(format!("{}_face.stl", COUNTER2.get())),
                 &[Triangle([e.a.pos, e.b.pos, p.pos])],
-            );
+            )
+            .expect("Failed(debug) to write face to file");
             save_points(
                 &PathBuf::from(format!("{}_ball_center.ply", COUNTER2.get())),
                 &vec![Point::new(c)],
             )
-            .expect("Failed to save points");
+            .expect("Failed(debug) to write ball_center file");
         }
 
         // this check is not in the paper: the ball center must always be above the
@@ -461,11 +463,13 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut [MeshEdge]) {
                 // So a line not a triangle.
                 front_triangles.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
             }
-            save_triangles(&PathBuf::from("glue_front.stl"), &front_triangles);
-            save_triangles(
+            save_triangles_ascii(&PathBuf::from("glue_front.stl"), &front_triangles)
+                .expect("Err debug failing writing glue_front.stl");
+            save_triangles_ascii(
                 &PathBuf::from("glue_edges.stl"),
                 &[Triangle([a.a.pos, a.a.pos, a.b.pos])],
-            );
+            )
+            .expect("Err debug failing writing glue_edge.stl");
         }
     }
     // case 1

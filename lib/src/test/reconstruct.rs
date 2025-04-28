@@ -7,9 +7,8 @@ use crate::Triangle;
 use crate::io::load_xyz;
 use crate::io::save_points;
 use crate::io::save_triangles;
-use crate::mesh::MeshFace;
-use crate::mesh::MeshPoint;
 use crate::reconstruct;
+use crate::save_triangles_ascii;
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
@@ -77,7 +76,7 @@ fn sphere_36_18() {
     let mesh = measure_reconstruct(&cloud, 0.3f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles);
+        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles).expect("failed to write to sphere_36_18_mesh");
     }
 }
 
@@ -91,7 +90,7 @@ fn sphere_100_50() {
 
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles);
+        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles).expect("failed to write to sphere_100_50_mesh");
     }
 }
 
@@ -123,7 +122,7 @@ fn tetrahedron() {
     let mesh = measure_reconstruct(&cloud, 2f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("tetrahedron_cloud.stl"), &triangles);
+        save_triangles_ascii(&PathBuf::from("tetrahedron_cloud.stl"), &triangles).expect("failed to save tetrahedron_cloud");
     }
 }
 
@@ -165,13 +164,13 @@ fn cube() {
     ];
 
     if let Err(e) = save_points(&PathBuf::from("cube_cloud.ply"), &cloud) {
-        eprintln!("Error saving points: {}", e);
+        eprintln!("Error saving cube_cloud: {}", e);
     }
 
     let mesh = measure_reconstruct(&cloud, 2f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("cube_mesh.stl"), &triangles);
+        save_triangles_ascii(&PathBuf::from("cube_mesh.stl"), &triangles).expect("could not output cube_mesh.stl");
     }
 }
 
@@ -182,6 +181,6 @@ fn bunny() {
     let mesh = measure_reconstruct(&cloud, 0.002f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles);
+        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles).expect("Failed to save bunny.stl");
     }
 }

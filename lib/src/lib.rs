@@ -19,15 +19,15 @@ use grid::not_used;
 use grid::on_front;
 use grid::output_triangle;
 use io::save_points;
+use io::save_triangles_ascii;
 use mesh::EdgeStatus;
 use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
 
-use io::save_triangles;
-
 type Cell = Vec<MeshPoint>;
 
+#[derive(Debug)]
 pub struct Triangle([Vec3; 3]);
 
 impl Triangle {
@@ -80,7 +80,8 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             let mut front = vec![e0, e1, e2];
             let debug = true;
             if debug {
-                save_triangles(&PathBuf::from("seed.stl"), &triangles);
+                save_triangles_ascii(&PathBuf::from("seed.stl"), &triangles)
+                    .expect("Failed(debug) to write seed to file");
             }
 
             let debug = true;
@@ -91,12 +92,14 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
 
                 if debug {
-                    save_triangles(&PathBuf::from("front.stl"), &triangles);
+                    save_triangles_ascii(&PathBuf::from("front.stl"), &triangles)
+                        .expect("Failed(debug) to write front to file");
                 }
 
                 let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
                 if debug {
-                    save_triangles(&PathBuf::from("current_mesh.stl"), &triangles);
+                    save_triangles_ascii(&PathBuf::from("current_mesh.stl"), &triangles)
+                        .expect("Failed(debug) writing current mesh to file");
                 }
 
                 let mut boundary_test = false;
@@ -152,7 +155,8 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         boundary_edges.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
                     }
                 }
-                save_triangles(&PathBuf::from("boundary_edges.stl"), &boundary_edges);
+                save_triangles_ascii(&PathBuf::from("boundary_edges.stl"), &boundary_edges)
+                    .expect("Failed writing boundary_edges to file");
             }
             Some(triangles)
         }

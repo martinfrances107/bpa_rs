@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use bpa_rs::io::load_xyz;
-use bpa_rs::io::save_triangles;
+use bpa_rs::io::save_triangles_ascii;
 use bpa_rs::reconstruct;
 use clap::Parser;
 use clap::arg;
@@ -30,7 +30,9 @@ fn main() {
 
     match reconstruct(&points, args.radius) {
         Some(triangles) => {
-            save_triangles(&output, &triangles);
+            if let Err(e) = save_triangles_ascii(&output, &triangles) {
+                eprintln!("Exception occurred while writing to file. {e}");
+            }
         }
         None => {
             eprintln!("Exception occurred reconstructing the surface");
