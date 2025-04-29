@@ -75,10 +75,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             e1.prev = Some(Box::new(e0.clone()));
             e2.next = Some(Box::new(e0.clone()));
 
-
             seed[0].edges = vec![e0.clone(), e2.clone()];
-            seed[1].edges = vec![e0.clone(),e1.clone()];
-            seed[2].edges = vec![e1.clone(),e2.clone()];
+            seed[1].edges = vec![e0.clone(), e1.clone()];
+            seed[2].edges = vec![e1.clone(), e2.clone()];
 
             let mut front = vec![e0, e1, e2];
             let debug = true;
