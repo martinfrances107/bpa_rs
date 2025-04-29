@@ -52,7 +52,7 @@ impl Point {
 pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let mut grid = Grid::new(points, radius);
 
-    match find_seed_triangle(&mut grid, radius) {
+    match find_seed_triangle(&grid, radius) {
         None => {
             eprintln!("No seed triangle found");
             None
@@ -63,7 +63,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             output_triangle(&f, &mut triangles);
 
             // auto& e0 = edges.emplace_back(MeshEdge{seed[0], seed[1], seed[2], ballCenter});
-            let seed = f.0;
+            let mut seed = f.0;
             let mut e0 = MeshEdge::new(&seed[0], &seed[1], seed[2].clone(), ball_center);
             let mut e1 = MeshEdge::new(&seed[1], &seed[2], seed[0].clone(), ball_center);
             let mut e2 = MeshEdge::new(&seed[2], &seed[0], seed[1].clone(), ball_center);
@@ -75,8 +75,10 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             e1.prev = Some(Box::new(e0.clone()));
             e2.next = Some(Box::new(e0.clone()));
 
-            // TODO: Set seed.
-            todo!();
+
+            seed[0].edges = vec![e0.clone(), e2.clone()];
+            seed[1].edges = vec![e0.clone(),e1.clone()];
+            seed[2].edges = vec![e1.clone(),e2.clone()];
 
             let mut front = vec![e0, e1, e2];
             let debug = true;
