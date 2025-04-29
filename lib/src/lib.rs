@@ -76,6 +76,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             e2.next = Some(Box::new(e0.clone()));
 
             // TODO: Set seed.
+            todo!();
 
             let mut front = vec![e0, e1, e2];
             let debug = true;
@@ -117,7 +118,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         );
 
                         let (mut e_ik, mut e_kj) = join(
-                            &mut e_ij.unwrap(),
+                            &mut e_ij.clone().unwrap(),
                             &mut o_k.p.clone(),
                             o_k.center,
                             &mut front,
@@ -135,15 +136,18 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
                 if !boundary_test {
                     if debug {
-                        save_points(
-                            &PathBuf::from("current_boundary.ply"),
-                            &vec![Point::new(o_k.unwrap().p.pos)],
-                        )
-                        .expect("could not save current boundary");
-                        todo!();
+                        let cb_points = match o_k {
+                            Some(pr) => {
+                                vec![Point::new(pr.p.pos)]
+                            }
+                            None => {
+                                vec![]
+                            }
+                        };
+                        save_points(&PathBuf::from("current_boundary.ply"), &cb_points)
+                            .expect("could not save current boundary");
                     }
-                    todo!();
-                    // e_ij.unwrap().status = EdgeStatus::Boundary;
+                    e_ij.unwrap().status = EdgeStatus::Boundary;
                 }
             }
 

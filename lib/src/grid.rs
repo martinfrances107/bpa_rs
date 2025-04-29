@@ -147,7 +147,7 @@ pub(crate) struct SeedResult {
     pub(crate) ball_center: Vec3,
 }
 
-pub(crate) fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedResult> {
+pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult> {
     for c_i in 0..grid.cells.len() {
         let avg_normal = grid.cells[c_i]
             .iter()
@@ -180,7 +180,7 @@ pub(crate) fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedRes
                     // only accept triangles which's normal points into the same
                     // half-space as the average normal of this cell's points
                     let f = MeshFace([
-                        grid.cells[c_i][i].clone(),
+                        neighborhood[i].clone(),
                         neighborhood[j].clone(),
                         neighborhood[k].clone(),
                     ]);
@@ -191,7 +191,6 @@ pub(crate) fn find_seed_triangle(grid: &mut Grid, radius: f32) -> Option<SeedRes
                     let ball_center = compute_ball_center(&f, radius);
                     if let Some(ball_center) = ball_center {
                         if ball_is_empty(&ball_center, &neighborhood, radius) {
-                            grid.cells[c_i][1].used = true;
                             (neighborhood[i]).used = true;
                             (neighborhood[j]).used = true;
                             (neighborhood[k]).used = true;
@@ -249,6 +248,9 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     };
 
     println!("counter {}", COUNTER.get());
+    if COUNTER.get() > 10 {
+        panic!("counter >10 with a terahedral");
+    }
     let debug = true;
     if debug {
         save_triangles_ascii(
