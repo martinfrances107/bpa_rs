@@ -249,7 +249,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
     println!("counter {}", COUNTER.get());
     if COUNTER.get() > 10 {
-        panic!("counter >10 with a terahedral");
+        panic!("counter >10 with a tetrahedral");
     }
     let debug = true;
     if debug {
@@ -285,7 +285,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
     let mut i = 0;
     let mut smallest_number = 0;
-    for p in &neighborhood {
+    'next_neighborhood: for p in &neighborhood {
         i += i;
         let new_face_normal = Triangle([e.a.pos, e.b.pos, p.pos]).normal();
 
@@ -338,57 +338,57 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                 ));
                 continue;
             }
+        }
+        // this check is not in the paper: points to which we already have an inner
+        // edge are not considered
+        // for (const auto* ee : p->edges) {
 
-            // this check is not in the paper: points to which we already have an inner
-            // edge are not considered
-            // for (const auto* ee : p->edges) {
-            for ee in &p.edges {
-                // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
-                let other_point = if ee.a == p.clone() { &ee.b } else { &ee.a };
-                if ee.status == EdgeStatus::Inner && *other_point == e.a || *other_point == e.b {
-                    if debug {
-                        ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.pos));
-                    }
-                    todo!();
-                    // goto nextneighbor;
-                }
-            }
-
-            {
-                let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
-                if new_center_vec.cross(old_center_vec).dot(e.a.pos - e.b.pos) < 0.0_f32 {
-                    angle += std::f32::consts::PI;
-                }
-                if angle < small_angle {
-                    small_angle = angle;
-                    points_with_small_angle = Some(p.clone());
-                    center_of_smallest = c;
-                    smallest_number = i;
-                }
-
+        for ee in &p.edges {
+            // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
+            let other_point = if ee.a == p.clone() { &ee.b } else { &ee.a };
+            if ee.status == EdgeStatus::Inner && *other_point == e.a || *other_point == e.b {
                 if debug {
-                    ss.push_str(&format!(
-                        "{i}.   {}  center {:?}  angle {:?} next center face dot {}\n",
-                        p.pos, c, angle, new_center_face_dot
-                    ));
+                    ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.pos));
                 }
+                // This was a GOTO into the original c++ source.
+                continue  'next_neighborhood
+            }
+        }
+
+        {
+            let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
+            if new_center_vec.cross(old_center_vec).dot(e.a.pos - e.b.pos) < 0.0_f32 {
+                angle += std::f32::consts::PI;
+            }
+            if angle < small_angle {
+                small_angle = angle;
+                points_with_small_angle = Some(p.clone());
+                center_of_smallest = c;
+                smallest_number = i;
             }
 
-            if small_angle != f32::MAX {
-                if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
-                    if debug {
-                        ss.push_str(&format!("       picking point {smallest_number}\n"));
-                    }
-                    return Some(PivotResult {
-                        p: points_with_small_angle.unwrap(),
-                        center: center_of_smallest,
-                    });
-                } else if debug {
-                    ss.push_str(&format!(
-                        "found candidate {} but bail is not empty \n",
-                        smallest_number
-                    ));
+            if debug {
+                ss.push_str(&format!(
+                    "{i}.   {}  center {:?}  angle {:?} next center face dot {}\n",
+                    p.pos, c, angle, new_center_face_dot
+                ));
+            }
+        }
+
+        if small_angle != f32::MAX {
+            if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
+                if debug {
+                    ss.push_str(&format!("       picking point {smallest_number}\n"));
                 }
+                return Some(PivotResult {
+                    p: points_with_small_angle.unwrap(),
+                    center: center_of_smallest,
+                });
+            } else if debug {
+                ss.push_str(&format!(
+                    "found candidate {} but bail is not empty \n",
+                    smallest_number
+                ));
             }
         }
     }
