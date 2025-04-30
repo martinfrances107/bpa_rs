@@ -336,8 +336,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                     "{i}.    {:?} ball center {:?} underneath triangle\n",
                     p.pos, c
                 ));
-                continue;
-            }
+              }
+              continue;
         }
         // this check is not in the paper: points to which we already have an inner
         // edge are not considered

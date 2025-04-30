@@ -4,7 +4,7 @@ Rust 2021 Edition.
 
 ## Ball Pivoting Algorithm (BPA)
 
-** THIS IS A DEVELOPMENT branch .. IS NOT YET FUNCTIONAL **
+**THIS IS A DEVELOPMENT branch .. IS NOT YET FUNCTIONAL**
 
 Mesh Reconstruction from a Point Cloud.
 
@@ -27,4 +27,4 @@ Options:
   -r, --radius <RADIUS>
   -o, --output <OUTPUT>  output mesh file mesh
   -h, --help             Print help
-```rust
+```
