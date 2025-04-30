@@ -4,7 +4,7 @@ Rust 2021 Edition.
 
 ## Ball Pivoting Algorithm (BPA)
 
-**THIS IS A DEVELOPMENT branch .. IS NOT YET FUNCTIONAL**
+**THIS IS A DEVELOPMENT branch .. IT IS NOT YET FUNCTIONAL**
 
 Mesh Reconstruction from a Point Cloud.
 
@@ -14,8 +14,10 @@ The Ball-Pivoting Algorithm for Surface Reconstruction by Fausto Bernardini, Jos
 
 This project is separated into a library and a "ply2stl" binary file
 
+To run the binary
+
 ```bash
-cd driver
+cd ply2stl
 cargo run -- --help
 ```
 
