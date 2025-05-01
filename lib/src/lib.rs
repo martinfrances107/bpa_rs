@@ -1,4 +1,16 @@
+#![deny(clippy::all)]
+#![warn(clippy::cargo)]
+#![warn(clippy::complexity)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![warn(clippy::perf)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
+#![allow(clippy::many_single_char_names)]
+#![doc = include_str!("../../README.md")]
+
 mod grid;
+/// Load and Save points and meshes.
 pub mod io;
 mod mesh;
 #[cfg(test)]
@@ -27,6 +39,7 @@ use mesh::MeshPoint;
 
 type Cell = Vec<MeshPoint>;
 
+/// A series of Points
 #[derive(Debug)]
 pub struct Triangle([Vec3; 3]);
 
@@ -37,6 +50,7 @@ impl Triangle {
     }
 }
 
+/// Base primitive for triangles and meshes.
 #[derive(Debug)]
 pub struct Point {
     pos: Vec3,
@@ -49,6 +63,9 @@ impl Point {
     }
 }
 
+/// Returns a mesh from a point cloud.
+///
+/// Main entry point for this library.
 pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let mut grid = Grid::new(points, radius);
 
