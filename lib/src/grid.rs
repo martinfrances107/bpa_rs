@@ -25,7 +25,7 @@ pub(crate) struct Grid {
     dims: IVec3,
     cells: Vec<Cell>,
     lower: Vec3,
-    upper: Vec3,
+    // upper: Vec3,
 }
 
 impl Grid {
@@ -54,7 +54,7 @@ impl Grid {
             dims,
             cells,
             lower,
-            upper,
+            // upper,
         };
 
         for p in points {
@@ -235,6 +235,7 @@ thread_local! {
 }
 
 pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<PivotResult> {
+    println!("entry: ball pivot");
     let m = (e.a.pos + e.b.pos) / 2.0;
     let old_center_vec = (e.center - m).normalize();
 
@@ -263,8 +264,11 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
         for n in &neighborhood {
             points.push(Point::new(n.pos))
         }
-        // save_points(&PathBuf::from(format!("{}_neighbor.ply", counter)), &points)
-        //     .expect("Failed to save points");
+        save_points(
+            &PathBuf::from(format!("{}_neighbor.ply", COUNTER.get())),
+            &points,
+        )
+        .expect("Failed to save points");
     }
 
     let mut small_angle = f32::MAX;
@@ -285,7 +289,9 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
     let mut i = 0;
     let mut smallest_number = 0;
+    println!("ball pivot about to start neighborhood loop");
     'next_neighborhood: for p in &neighborhood {
+        println!("neighborhood loop");
         i += i;
         let new_face_normal = Triangle([e.a.pos, e.b.pos, p.pos]).normal();
 
@@ -314,12 +320,12 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                 eprintln!("Access error incrementing debug counter: {:?}", e);
             };
             save_triangles_ascii(
-                &PathBuf::from(format!("{}_face.stl", COUNTER2.get())),
+                &PathBuf::from(format!("{}_{}_face.stl", COUNTER.get(), COUNTER2.get())),
                 &[Triangle([e.a.pos, e.b.pos, p.pos])],
             )
             .expect("Failed(debug) to write face to file");
             save_points(
-                &PathBuf::from(format!("{}_ball_center.ply", COUNTER2.get())),
+                &PathBuf::from(format!("{}_{}_ball_center.ply", COUNTER.get(),COUNTER2.get())),
                 &vec![Point::new(c)],
             )
             .expect("Failed(debug) to write ball_center file");
@@ -336,8 +342,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                     "{i}.    {:?} ball center {:?} underneath triangle\n",
                     p.pos, c
                 ));
-              }
-              continue;
+            }
+            continue;
         }
         // this check is not in the paper: points to which we already have an inner
         // edge are not considered
@@ -351,7 +357,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                     ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.pos));
                 }
                 // This was a GOTO into the original c++ source.
-                continue  'next_neighborhood
+                println!("following goto");
+                continue 'next_neighborhood;
             }
         }
 
