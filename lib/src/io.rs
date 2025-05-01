@@ -37,7 +37,10 @@ pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn st
         buffer.extend_from_slice(
             &point
                 .normal
-                .unwrap()
+                .unwrap_or_else(|| {
+                    println!("Saving a point without a normal ( defaulting to zero ) ");
+                    Vec3::default()
+                })
                 .to_array()
                 .iter()
                 .flat_map(|f| f.to_le_bytes())
