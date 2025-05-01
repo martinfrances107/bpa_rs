@@ -293,7 +293,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     'next_neighborhood: for p in &neighborhood {
         println!("neighborhood loop");
         i += i;
-        let new_face_normal = Triangle([e.a.pos, e.b.pos, p.pos]).normal();
+        let new_face_normal = Triangle([e.b.pos, e.a.pos, p.pos]).normal();
 
         // this check is not in the paper: all points' normals must point into the
         // same half-space
