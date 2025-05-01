@@ -8,6 +8,7 @@ use crate::{Point, Triangle};
 
 static ATTRIBUTE_COUNT: [u8; 2] = [0; 2];
 
+/// Write Point cloud to file.
 pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn std::error::Error>> {
     if path.parent().is_none() {
         std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
@@ -54,6 +55,7 @@ pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn st
     Ok(())
 }
 
+/// Write triangles to file.
 pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result<()> {
     if path.parent().is_some() {
         std::fs::create_dir_all(path.parent().unwrap())?;
@@ -93,6 +95,9 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
     Ok(())
 }
 
+/// Write triangles as a STL file (in ascii format).
+///
+/// Use only when debugging.
 pub fn save_triangles_ascii(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result<()> {
     if path.parent().is_some() {
         std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
@@ -120,6 +125,7 @@ pub fn save_triangles_ascii(path: &PathBuf, triangles: &[Triangle]) -> std::io::
     Ok(())
 }
 
+/// Return a point cloud stored in file.
 pub fn load_xyz(path: &PathBuf) -> Vec<Point> {
     let file = std::fs::File::open(path).expect("Failed to open file");
     let reader = std::io::BufReader::new(file);
