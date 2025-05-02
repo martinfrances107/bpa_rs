@@ -84,26 +84,20 @@ impl Grid {
             for y_off in -1..=1 {
                 for z_off in -1..=1 {
                     let index = center_index + ivec3(x_off, y_off, z_off);
-                    if index.x < 0
-                        || index.x >= self.dims.x
-                        || index.y < 0
-                        || index.y >= self.dims.y
-                        || index.z < 0
-                        || index.z >= self.dims.z
+                    if (index.x < 0 || index.x >= self.dims.x)
+                        || (index.y < 0 || index.y >= self.dims.y)
+                        || (index.z < 0 || index.z >= self.dims.z)
                     {
                         continue;
                     }
 
                     // TODO cell_size is defined at the top, to appease the borrow checker
-                    // is this a breaking change from the C++ code?
                     let cell_size = self.cell_size;
                     for p in self.cell(index) {
-                        let len = (p.pos - point).length_squared();
-                        if len < cell_size * cell_size {
-                            let find = ignore.iter().find(|&x| *x == p.pos);
-                            if find.is_none() {
-                                result.push(p.clone());
-                            }
+                        if (p.pos - point).length_squared() < cell_size * cell_size
+                            && !ignore.contains(&p.pos)
+                        {
+                            result.push(p.clone());
                         }
                     }
                 }
