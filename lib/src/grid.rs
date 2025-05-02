@@ -218,9 +218,9 @@ pub(crate) fn get_active_edge(front: &mut Vec<MeshEdge>) -> Option<MeshEdge> {
                     }
                 }
             }
+            // cleanup non-active edges from front
+            front.pop();
         }
-
-        front.pop();
     }
 }
 

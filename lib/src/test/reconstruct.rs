@@ -183,7 +183,8 @@ fn cube() {
 #[test]
 fn bunny() {
     println!("bunny {:#?}", std::env::current_dir());
-    let cloud = load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny for test to begin");
+    let cloud =
+        load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny for test to begin");
 
     let mesh = measure_reconstruct(&cloud, 0.002f32);
     assert!(mesh.is_some());
