@@ -73,8 +73,10 @@ fn sphere_36_18() {
     if let Err(e) = save_points(&PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
+
     let mesh = measure_reconstruct(&cloud, 0.3f32);
     assert!(mesh.is_some());
+
     if let Some(triangles) = mesh {
         save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles)
             .expect("failed to write to sphere_36_18_mesh");
@@ -181,7 +183,8 @@ fn cube() {
 #[test]
 fn bunny() {
     println!("bunny {:#?}", std::env::current_dir());
-    let cloud = load_xyz(&PathBuf::from("../data/bunny.xyz"));
+    let cloud = load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny for test to begin");
+
     let mesh = measure_reconstruct(&cloud, 0.002f32);
     assert!(mesh.is_some());
     if let Some(triangles) = mesh {

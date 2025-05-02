@@ -9,12 +9,15 @@ use crate::{Point, Triangle};
 static ATTRIBUTE_COUNT: [u8; 2] = [0; 2];
 
 /// Write Point cloud to file.
+///
+/// # Errors
+///   Problems writing to file.
 pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn std::error::Error>> {
-    if path.parent().is_none() {
-        std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
     }
 
-    let mut file = std::fs::File::create(path).expect("Failed to create file");
+    let mut file = std::fs::File::create(path)?;
     writeln!(file, "ply")?;
     writeln!(file, "format binary_little_endian 1.0")?;
     writeln!(file, "element vertex {}", points.len())?;
@@ -48,18 +51,22 @@ pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn st
                 .collect::<Vec<u8>>(),
         );
     }
-    file.write_all(&buffer).expect("Failed to write points");
-    file.flush().expect("Failed to flush file");
-    file.sync_all().expect("Failed to sync file");
+    file.write_all(&buffer)?;
+    file.flush()?;
+    file.sync_all()?;
 
     Ok(())
 }
 
 /// Write triangles to file.
+///
+/// # Errors
+///   When the file cannot be created or written to.
 pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result<()> {
-    if path.parent().is_some() {
-        std::fs::create_dir_all(path.parent().unwrap())?;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
     }
+
     let mut file = std::fs::File::create(path)?;
 
     // Header
@@ -72,9 +79,9 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
         // Normals
         let normal = (t.0[0] - t.0[1]).cross(t.0[0] - t.0[2]).normalize();
         println!("saving triangle: normal {:?}", normal);
-        let normal_bytes = normal.to_array().map(|f| f.to_le_bytes()).concat();
+        let normal_bytes = normal.to_array().map(f32::to_le_bytes).concat();
         file.write_all(&normal_bytes)?;
-        println!("saving triangle: triangle {:#?}", t);
+        println!("saving triangle: triangle {t:#?}");
         // Triangles
         let triangle_bytes =
             t.0.map(|v| v.to_array())
@@ -98,11 +105,16 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
 /// Write triangles as a STL file (in ascii format).
 ///
 /// Use only when debugging.
+///
+/// # Errors
+///
+/// # Panics
+///
 pub fn save_triangles_ascii(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result<()> {
     if path.parent().is_some() {
-        std::fs::create_dir_all(path.parent().unwrap()).expect("Failed to create directories");
+        std::fs::create_dir_all(path.parent().unwrap())?;
     }
-    let mut file = std::fs::File::create(path).expect("Failed to create file");
+    let mut file = std::fs::File::create(path)?;
 
     writeln!(file, "solid {}", path.to_str().unwrap())?;
 
@@ -126,12 +138,18 @@ pub fn save_triangles_ascii(path: &PathBuf, triangles: &[Triangle]) -> std::io::
 }
 
 /// Return a point cloud stored in file.
-pub fn load_xyz(path: &PathBuf) -> Vec<Point> {
-    let file = std::fs::File::open(path).expect("Failed to open file");
+///
+/// # Errors
+///   If the file cannot be opened.
+///
+/// # Panics
+///   When there is a unreadable value in the file.
+pub fn load_xyz(path: &PathBuf) -> std::io::Result<Vec<Point>> {
+    let file = std::fs::File::open(path)?;
     let reader = std::io::BufReader::new(file);
     let mut points = Vec::new();
     for line in reader.lines() {
-        let line = line.expect("Failed to read line");
+        let line = line?;
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() < 3 {
             continue;
@@ -144,5 +162,5 @@ pub fn load_xyz(path: &PathBuf) -> Vec<Point> {
             normal: Some(Vec3::ZERO),
         });
     }
-    points
+    Ok(points)
 }

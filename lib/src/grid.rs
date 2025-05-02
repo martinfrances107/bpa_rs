@@ -249,7 +249,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     };
 
     println!("counter {}", COUNTER.get());
-    if COUNTER.get() > 10 {
+    if COUNTER.get() > 5 {
         panic!("counter >10 with a tetrahedral");
     }
     let debug = true;
@@ -265,7 +265,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             points.push(Point::new(n.pos))
         }
         save_points(
-            &PathBuf::from(format!("{}_neighbor.ply", COUNTER.get())),
+            &PathBuf::from(format!("{}_neighborhood.ply", COUNTER.get())),
             &points,
         )
         .expect("Failed to save points");
@@ -301,15 +301,15 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             continue;
         }
 
-        let c = match compute_ball_center(&MeshFace([e.b.clone(), e.a.clone(), p.clone()]), radius)
+        let c = if let Some(c) =
+            compute_ball_center(&MeshFace([e.b.clone(), e.a.clone(), p.clone()]), radius)
         {
-            Some(c) => c,
-            None => {
-                if debug {
-                    ss.push_str(&format!("{i}.     {:?} center computation failed\n", p.pos));
-                }
-                continue;
+            c
+        } else {
+            if debug {
+                ss.push_str(&format!("{i}.     {:?} center computation failed\n", p.pos));
             }
+            continue;
         };
 
         if debug {
@@ -318,14 +318,18 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             }) {
                 // Elsewhere COUNTER2's destructor has been called!!!``
                 eprintln!("Access error incrementing debug counter: {:?}", e);
-            };
+            }
             save_triangles_ascii(
                 &PathBuf::from(format!("{}_{}_face.stl", COUNTER.get(), COUNTER2.get())),
                 &[Triangle([e.a.pos, e.b.pos, p.pos])],
             )
             .expect("Failed(debug) to write face to file");
             save_points(
-                &PathBuf::from(format!("{}_{}_ball_center.ply", COUNTER.get(),COUNTER2.get())),
+                &PathBuf::from(format!(
+                    "{}_{}_ball_center.ply",
+                    COUNTER.get(),
+                    COUNTER2.get()
+                )),
                 &vec![Point::new(c)],
             )
             .expect("Failed(debug) to write ball_center file");
@@ -386,15 +390,29 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
                 if debug {
                     ss.push_str(&format!("       picking point {smallest_number}\n"));
+                    match &points_with_small_angle {
+                        Some(candidate_point) => {
+                            save_points(
+                                &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
+                                &vec![Point::new(candidate_point.pos)],
+                            )
+                            .expect("Failed(debug) to write ball_center file");
+                        }
+                        None => {
+                            eprintln!(
+                                "debug: trying to display a candidate point which doe not exist"
+                            );
+                        }
+                    }
                 }
+
                 return Some(PivotResult {
                     p: points_with_small_angle.unwrap(),
                     center: center_of_smallest,
                 });
             } else if debug {
                 ss.push_str(&format!(
-                    "found candidate {} but bail is not empty \n",
-                    smallest_number
+                    "found candidate {smallest_number} but bail is not empty \n"
                 ));
             }
         }
@@ -402,7 +420,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     None
 }
 
-pub(crate) fn not_used(p: &MeshPoint) -> bool {
+pub(crate) const fn not_used(p: &MeshPoint) -> bool {
     !p.used
 }
 
@@ -411,7 +429,7 @@ pub(crate) fn on_front(p: &MeshPoint) -> bool {
 }
 
 // Removed edge from consideration
-fn remove(e: &mut MeshEdge) {
+const fn remove(e: &mut MeshEdge) {
     e.status = EdgeStatus::Inner;
 }
 
@@ -427,9 +445,9 @@ pub(crate) fn join(
     edges: &mut Vec<MeshEdge>,
 ) -> (MeshEdge, MeshEdge) {
     // auto& e_ik = edges.emplace_back(MeshEdge{e_ij->a, o_k, e_ij->b, o_k_ballCenter});
-    let mut e_ik = MeshEdge::new(&e_ij.a, o_k, e_ij.b.clone(), o_k_ball_center);
+    let mut e_ik = MeshEdge::new(&e_ij.a, o_k, &e_ij.b.clone(), o_k_ball_center);
     edges.push(e_ik.clone());
-    let mut e_kj = MeshEdge::new(o_k, &e_ij.b, e_ij.a.clone(), o_k_ball_center);
+    let mut e_kj = MeshEdge::new(o_k, &e_ij.b, &e_ij.a.clone(), o_k_ball_center);
     edges.push(e_kj.clone());
 
     // e_ik
@@ -461,12 +479,12 @@ pub(crate) fn join(
     (e_ik, e_kj)
 }
 
-pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &mut [MeshEdge]) {
+pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
     // TODO replace this boolean with a proper check
     let debug = true;
     if debug {
         let mut front_triangles = vec![];
-        for e in front.iter() {
+        for e in front {
             if e.status == EdgeStatus::Active {
                 // This looks buggy the cpp version repeats e.a.pos.
                 // So a line not a triangle.

@@ -12,7 +12,7 @@
 mod grid;
 /// Load and Save points and meshes.
 pub mod io;
-mod mesh;
+pub(crate) mod mesh;
 #[cfg(test)]
 mod test;
 
@@ -58,7 +58,7 @@ pub struct Point {
 }
 
 impl Point {
-    fn new(pos: Vec3) -> Self {
+    const fn new(pos: Vec3) -> Self {
         Self { pos, normal: None }
     }
 }
@@ -66,6 +66,10 @@ impl Point {
 /// Returns a mesh from a point cloud.
 ///
 /// Main entry point for this library.
+///
+/// # Panics
+///  (ONLY Debug) File system issues when `saving_points()`'s or `saving_triangle()`'s
+#[must_use]
 pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let mut grid = Grid::new(points, radius);
 
@@ -81,9 +85,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
             // auto& e0 = edges.emplace_back(MeshEdge{seed[0], seed[1], seed[2], ballCenter});
             let mut seed = f.0;
-            let mut e0 = MeshEdge::new(&seed[0], &seed[1], seed[2].clone(), ball_center);
-            let mut e1 = MeshEdge::new(&seed[1], &seed[2], seed[0].clone(), ball_center);
-            let mut e2 = MeshEdge::new(&seed[2], &seed[0], seed[1].clone(), ball_center);
+            let mut e0 = MeshEdge::new(&seed[0], &seed[1], &seed[2].clone(), ball_center);
+            let mut e1 = MeshEdge::new(&seed[1], &seed[2], &seed[0].clone(), ball_center);
+            let mut e2 = MeshEdge::new(&seed[2], &seed[0], &seed[1].clone(), ball_center);
 
             e0.prev = Some(Box::new(e2.clone()));
             e1.next = Some(Box::new(e2.clone()));
@@ -144,11 +148,11 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         );
 
                         if let Some(mut e_ki) = find_reverse_edge_on_front(&e_ik) {
-                            glue(&mut e_ik, &mut e_ki, &mut front);
+                            glue(&mut e_ik, &mut e_ki, &front);
                         }
 
                         if let Some(mut e_jk) = find_reverse_edge_on_front(&e_kj) {
-                            glue(&mut e_kj, &mut e_jk, &mut front)
+                            glue(&mut e_kj, &mut e_jk, &front);
                         }
                     }
                 }
@@ -172,7 +176,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             if debug {
                 let mut boundary_edges = vec![];
 
-                for e in front.iter() {
+                for e in front {
                     if e.status == EdgeStatus::Boundary {
                         boundary_edges.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
                     }

@@ -11,7 +11,7 @@ pub(crate) struct MeshPoint {
 }
 
 impl MeshPoint {
-    pub(crate) fn new(pos: Vec3) -> Self {
+    pub(crate) const fn new(pos: Vec3) -> Self {
         Self {
             pos,
             normal: None,
@@ -52,7 +52,7 @@ pub(crate) struct MeshEdge {
 }
 
 impl MeshEdge {
-    pub(crate) fn new(a: &MeshPoint, b: &MeshPoint, opposite: MeshPoint, center: Vec3) -> Self {
+    pub(crate) fn new(a: &MeshPoint, b: &MeshPoint, opposite: &MeshPoint, center: Vec3) -> Self {
         Self {
             a: a.clone(),
             b: b.clone(),
