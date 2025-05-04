@@ -39,6 +39,19 @@ use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
 
+// Why  Rc<RefCell<MeshPoint>>?
+//
+// When looping over neighborhood points the design needs mutable access
+// to cell points.
+//
+// for j in 0..neighborhood.len() {
+//     for k in 0..neighborhood.len() {
+//       // Mutable access.
+//     }
+// }
+//
+// dipping in and out of adjacent cells to form "neighborhood", a mutable
+// collections points,
 type Cell = Vec<Rc<RefCell<MeshPoint>>>;
 
 /// A series of Points
