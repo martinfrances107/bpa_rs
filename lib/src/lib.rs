@@ -9,7 +9,7 @@
 #![allow(clippy::many_single_char_names)]
 #![doc = include_str!("../../README.md")]
 
-mod grid;
+pub(crate) mod grid;
 /// Load and Save points and meshes.
 pub mod io;
 pub(crate) mod mesh;
@@ -119,7 +119,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 if debug {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
-                        &vec![Triangle([
+                        &[Triangle([
                             e_ij.clone().unwrap().a.pos,
                             e_ij.clone().unwrap().a.pos,
                             e_ij.clone().unwrap().b.pos,

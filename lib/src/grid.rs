@@ -1,6 +1,7 @@
 use core::cell::RefCell;
 use core::f32;
 use core::panic;
+use std::fmt::Write;
 use std::ops::Div;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -432,9 +433,11 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                     center: center_of_smallest,
                 });
             } else if debug {
-                ss.push_str(&format!(
-                    "found candidate {smallest_number} but bail is not empty \n"
-                ));
+                writeln!(
+                    &mut ss,
+                    "found candidate {smallest_number} but bail int not empty",
+                )
+                .expect("failed writing debug");
             }
         }
     }

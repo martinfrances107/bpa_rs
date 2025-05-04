@@ -78,7 +78,7 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
     for t in triangles {
         // Normals
         let normal = (t.0[0] - t.0[1]).cross(t.0[0] - t.0[2]).normalize();
-        println!("saving triangle: normal {:?}", normal);
+        println!("saving triangle: normal {normal:?}");
         let normal_bytes = normal.to_array().map(f32::to_le_bytes).concat();
         file.write_all(&normal_bytes)?;
         println!("saving triangle: triangle {t:#?}");
