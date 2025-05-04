@@ -16,7 +16,9 @@ pub(crate) mod mesh;
 #[cfg(test)]
 mod test;
 
+use core::cell::RefCell;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use glam::Vec3;
 use grid::Grid;
@@ -37,7 +39,7 @@ use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
 
-type Cell = Vec<MeshPoint>;
+type Cell = Vec<Rc<RefCell<MeshPoint>>>;
 
 /// A series of Points
 #[derive(Debug)]
@@ -134,13 +136,13 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                 let mut boundary_test = false;
                 if let Some(o_k) = &o_k {
-                    if not_used(&o_k.p) || on_front(&o_k.p) {
+                    if not_used(&o_k.p.borrow()) || on_front(&o_k.p.borrow()) {
                         boundary_test = true;
 
                         output_triangle(
                             &MeshFace([
                                 e_ij.clone().unwrap().a,
-                                o_k.p.clone(),
+                                o_k.p.borrow().clone(),
                                 e_ij.clone().unwrap().b,
                             ]),
                             &mut triangles,
@@ -148,7 +150,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                         let (mut e_ik, mut e_kj) = join(
                             &mut e_ij.clone().unwrap(),
-                            &mut o_k.p.clone(),
+                            &mut o_k.p.borrow().clone(),
                             o_k.center,
                             &mut front,
                             &mut edges,
@@ -167,7 +169,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     if debug {
                         let cb_points = match o_k {
                             Some(pr) => {
-                                vec![Point::new(pr.p.pos)]
+                                vec![Point::new(pr.p.borrow().pos)]
                             }
                             None => {
                                 vec![]

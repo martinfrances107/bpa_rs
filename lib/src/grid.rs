@@ -1,7 +1,9 @@
+use core::cell::RefCell;
 use core::f32;
 use core::panic;
 use std::ops::Div;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::vec;
 
 use glam::IVec3;
@@ -58,7 +60,8 @@ impl Grid {
         };
 
         for p in points {
-            grid.cell(grid.cell_index(&p.pos)).push(MeshPoint::from(p));
+            let actual_cell = grid.cell(grid.cell_index(&p.pos));
+            actual_cell.push(Rc::new(RefCell::new(MeshPoint::from(p))));
         }
 
         grid
@@ -75,7 +78,11 @@ impl Grid {
         &mut self.cells[index as usize]
     }
 
-    fn spherical_neighborhood(&mut self, point: &Vec3, ignore: &[Vec3]) -> Vec<MeshPoint> {
+    fn spherical_neighborhood(
+        &mut self,
+        point: &Vec3,
+        ignore: &[Vec3],
+    ) -> Vec<Rc<RefCell<MeshPoint>>> {
         let center_index = self.cell_index(point);
         // Just an estimate.
         let capacity = self.cell(center_index).len() * 27;
@@ -94,8 +101,9 @@ impl Grid {
                     // TODO cell_size is defined at the top, to appease the borrow checker
                     let cell_size = self.cell_size;
                     for p in self.cell(index) {
-                        if (p.pos - point).length_squared() < cell_size * cell_size
-                            && !ignore.contains(&p.pos)
+                        let p_pos = p.borrow().pos;
+                        if (p_pos - point).length_squared() < cell_size * cell_size
+                            && !ignore.contains(&p_pos)
                         {
                             result.push(p.clone());
                         }
@@ -128,9 +136,9 @@ pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
     Some(circum_circle_center + f.normal() * height_squared.sqrt())
 }
 
-fn ball_is_empty(ball_center: &Vec3, points: &[MeshPoint], radius: f32) -> bool {
+fn ball_is_empty(ball_center: &Vec3, points: &[Rc<RefCell<MeshPoint>>], radius: f32) -> bool {
     !points.iter().any(|p| {
-        let length_squared = (p.pos - ball_center).length_squared();
+        let length_squared = (p.borrow().pos - ball_center).length_squared();
         // TODO epsilon
         length_squared < radius * radius - 1e-4
     })
@@ -145,19 +153,20 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
     for c_i in 0..grid.cells.len() {
         let avg_normal = grid.cells[c_i]
             .iter()
-            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| match p.normal {
+            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| match p.borrow().normal {
                 Some(n) => acc + n,
                 None => acc,
             });
 
         for i in 0..grid.cells[c_i].len() {
-            let mut neighborhood = grid
-                .clone()
-                .spherical_neighborhood(&grid.cells[c_i][i].pos, &[grid.cells[c_i][i].pos]);
+            let mut neighborhood = grid.clone().spherical_neighborhood(
+                &grid.cells[c_i][i].borrow().pos,
+                &[grid.cells[c_i][i].borrow().pos],
+            );
 
             neighborhood.sort_by(|a, b| {
-                if (a.pos - grid.cells[c_i][i].pos).length_squared()
-                    < (b.pos - grid.cells[c_i][i].pos).length_squared()
+                if (a.borrow().pos - grid.cells[c_i][i].borrow().pos).length_squared()
+                    < (b.borrow().pos - grid.cells[c_i][i].borrow().pos).length_squared()
                 {
                     std::cmp::Ordering::Less
                 } else {
@@ -174,9 +183,9 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
                     // only accept triangles which's normal points into the same
                     // half-space as the average normal of this cell's points
                     let f = MeshFace([
-                        neighborhood[i].clone(),
-                        neighborhood[j].clone(),
-                        neighborhood[k].clone(),
+                        grid.cells[c_i][i].borrow().clone(),
+                        neighborhood[j].borrow().clone(),
+                        neighborhood[k].borrow().clone(),
                     ]);
 
                     if f.normal().dot(avg_normal) < 0.0 {
@@ -185,9 +194,12 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
                     let ball_center = compute_ball_center(&f, radius);
                     if let Some(ball_center) = ball_center {
                         if ball_is_empty(&ball_center, &neighborhood, radius) {
-                            (neighborhood[i]).used = true;
-                            (neighborhood[j]).used = true;
-                            (neighborhood[k]).used = true;
+                            let mut p_1 = grid.cells[c_i][i].borrow_mut();
+                            p_1.used = true;
+                            let mut n_j = neighborhood[j].borrow_mut();
+                            n_j.used = true;
+                            let mut n_k = neighborhood[k].borrow_mut();
+                            n_k.used = true;
                             return Some(SeedResult { f, ball_center });
                         }
                     }
@@ -219,7 +231,7 @@ pub(crate) fn get_active_edge(front: &mut Vec<MeshEdge>) -> Option<MeshEdge> {
 }
 
 pub(crate) struct PivotResult {
-    pub(crate) p: MeshPoint,
+    pub(crate) p: Rc<RefCell<MeshPoint>>,
     pub(crate) center: Vec3,
 }
 
@@ -256,7 +268,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
         let mut points = Vec::with_capacity(neighborhood.len());
         for n in &neighborhood {
-            points.push(Point::new(n.pos))
+            points.push(Point::new(n.borrow().pos))
         }
         save_points(
             &PathBuf::from(format!("{}_neighborhood.ply", COUNTER.get())),
@@ -287,21 +299,28 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     'next_neighborhood: for p in &neighborhood {
         println!("neighborhood loop");
         i += i;
-        let new_face_normal = Triangle([e.b.pos, e.a.pos, p.pos]).normal();
+        let new_face_normal = Triangle([e.b.pos, e.a.pos, p.borrow().pos]).normal();
 
         // this check is not in the paper: all points' normals must point into the
         // same half-space
-        if p.normal.is_some_and(|n| n.dot(new_face_normal) < 0.0) {
+        if p.borrow()
+            .normal
+            .is_some_and(|n| n.dot(new_face_normal) < 0.0)
+        {
             continue;
         }
 
-        let c = if let Some(c) =
-            compute_ball_center(&MeshFace([e.b.clone(), e.a.clone(), p.clone()]), radius)
-        {
+        let c = if let Some(c) = compute_ball_center(
+            &MeshFace([e.b.clone(), e.a.clone(), p.borrow().clone()]),
+            radius,
+        ) {
             c
         } else {
             if debug {
-                ss.push_str(&format!("{i}.     {:?} center computation failed\n", p.pos));
+                ss.push_str(&format!(
+                    "{i}.     {:?} center computation failed\n",
+                    p.borrow().pos
+                ));
             }
             continue;
         };
@@ -315,7 +334,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             }
             save_triangles_ascii(
                 &PathBuf::from(format!("{}_{}_face.stl", COUNTER.get(), COUNTER2.get())),
-                &[Triangle([e.a.pos, e.b.pos, p.pos])],
+                &[Triangle([e.a.pos, e.b.pos, p.borrow().pos])],
             )
             .expect("Failed(debug) to write face to file");
             save_points(
@@ -338,7 +357,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                 // ss << i << ".    " << p->pos << " ball center " << c.value() << " underneath triangle\n";
                 ss.push_str(&format!(
                     "{i}.    {:?} ball center {:?} underneath triangle\n",
-                    p.pos, c
+                    p.borrow().pos,
+                    c
                 ));
             }
             continue;
@@ -347,12 +367,16 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
         // edge are not considered
         // for (const auto* ee : p->edges) {
 
-        for ee in &p.edges {
+        for ee in &p.borrow().edges {
             // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
-            let other_point = if ee.a == p.clone() { &ee.b } else { &ee.a };
+            let other_point = if ee.a == p.borrow().clone() {
+                &ee.b
+            } else {
+                &ee.a
+            };
             if ee.status == EdgeStatus::Inner && *other_point == e.a || *other_point == e.b {
                 if debug {
-                    ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.pos));
+                    ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.borrow().pos));
                 }
                 // This was a GOTO into the original c++ source.
                 println!("following goto");
@@ -375,7 +399,10 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             if debug {
                 ss.push_str(&format!(
                     "{i}.   {}  center {:?}  angle {:?} next center face dot {}\n",
-                    p.pos, c, angle, new_center_face_dot
+                    p.borrow().pos,
+                    c,
+                    angle,
+                    new_center_face_dot
                 ));
             }
         }
@@ -388,7 +415,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
                         Some(candidate_point) => {
                             save_points(
                                 &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
-                                &vec![Point::new(candidate_point.pos)],
+                                &vec![Point::new(candidate_point.borrow().pos)],
                             )
                             .expect("Failed(debug) to write ball_center file");
                         }
