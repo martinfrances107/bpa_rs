@@ -115,8 +115,15 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
 
                 if debug {
-                    save_triangles_ascii(&PathBuf::from("front.stl"), &triangles)
-                        .expect("Failed(debug) to write front to file");
+                    save_triangles_ascii(
+                        &PathBuf::from("current_active_edge.stl"),
+                        &vec![Triangle([
+                            e_ij.clone().unwrap().a.pos,
+                            e_ij.clone().unwrap().a.pos,
+                            e_ij.clone().unwrap().b.pos,
+                        ])],
+                    )
+                    .expect("Failed(debug) to write front to file");
                 }
 
                 let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
