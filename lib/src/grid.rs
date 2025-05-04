@@ -52,7 +52,7 @@ impl Grid {
         let dims = candidate_dim.max(ivec3(1, 1, 1));
         let cells = vec![Cell::default(); (dims.x * dims.y * dims.z) as usize];
 
-        let mut grid = Grid {
+        let mut grid = Self {
             cell_size,
             dims,
             cells,
@@ -154,10 +154,7 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
     for c_i in 0..grid.cells.len() {
         let avg_normal = grid.cells[c_i]
             .iter()
-            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| match p.borrow().normal {
-                Some(n) => acc + n,
-                None => acc,
-            });
+            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| p.borrow().normal.map_or(acc, |n| acc+n ));
 
         for i in 0..grid.cells[c_i].len() {
             let mut neighborhood = grid.clone().spherical_neighborhood(
@@ -253,7 +250,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
     }) {
         // Elsewhere COUNTER's destructor has been called!!!``
         eprintln!("Access error incrementing debug counter: {:?}", e);
-    };
+    }
 
     println!("counter {}", COUNTER.get());
     if COUNTER.get() > 5 {
@@ -269,7 +266,7 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
 
         let mut points = Vec::with_capacity(neighborhood.len());
         for n in &neighborhood {
-            points.push(Point::new(n.borrow().pos))
+            points.push(Point::new(n.borrow().pos));
         }
         save_points(
             &PathBuf::from(format!("{}_neighborhood.ply", COUNTER.get())),
@@ -318,10 +315,12 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             c
         } else {
             if debug {
-                ss.push_str(&format!(
+                writeln!(
+                    &mut ss,
                     "{i}.     {:?} center computation failed\n",
                     p.borrow().pos
-                ));
+                )
+                .expect("could not write debug");
             }
             continue;
         };
@@ -355,12 +354,12 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
         let new_center_face_dot = (new_center_vec).dot(new_face_normal);
         if new_center_face_dot < 0_f32 {
             if debug {
-                // ss << i << ".    " << p->pos << " ball center " << c.value() << " underneath triangle\n";
-                ss.push_str(&format!(
-                    "{i}.    {:?} ball center {:?} underneath triangle\n",
-                    p.borrow().pos,
-                    c
-                ));
+                writeln!(
+                    &mut ss,
+                    "{i}.    {:?} ball center {c:?} underneath triangle\n",
+                    p.borrow().pos
+                )
+                .expect("could not write debug");
             }
             continue;
         }
@@ -377,7 +376,8 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             };
             if ee.status == EdgeStatus::Inner && *other_point == e.a || *other_point == e.b {
                 if debug {
-                    ss.push_str(&format!("{i}.    {:?} inner edge exists\n", p.borrow().pos));
+                    writeln!(&mut ss, "{i}.    {:?} inner edge exists\n", p.borrow().pos)
+                        .expect("could to write debug");
                 }
                 // This was a GOTO into the original c++ source.
                 println!("following goto");
@@ -398,20 +398,20 @@ pub(crate) fn ball_pivot(e: &MeshEdge, grid: &mut Grid, radius: f32) -> Option<P
             }
 
             if debug {
-                ss.push_str(&format!(
-                    "{i}.   {}  center {:?}  angle {:?} next center face dot {}\n",
+                writeln!(
+                    &mut ss,
+                    "{i}.   {}  center {c:?}  angle {angle:?} next center face dot {new_center_face_dot}",
                     p.borrow().pos,
-                    c,
-                    angle,
-                    new_center_face_dot
-                ));
+                )
+                .expect("Failed to output debug");
             }
         }
 
         if small_angle != f32::MAX {
             if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
                 if debug {
-                    ss.push_str(&format!("       picking point {smallest_number}\n"));
+                    writeln!(&mut ss, "       picking point {smallest_number}")
+                        .expect("Could not render debug");
                     match &points_with_small_angle {
                         Some(candidate_point) => {
                             save_points(

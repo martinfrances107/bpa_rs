@@ -62,6 +62,9 @@ pub fn save_points(path: &PathBuf, points: &Vec<Point>) -> Result<(), Box<dyn st
 ///
 /// # Errors
 ///   When the file cannot be created or written to.
+///
+/// # Panics
+///   When the number of triangles exceeds that allow by the stl format.
 pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -72,7 +75,8 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
     // Header
     file.write_all(&[b' '; 80])?;
 
-    let count = triangles.len() as u32;
+    let count = u32::try_from(triangles.len())
+        .expect("stl file format cannot contain more than 4,294,967,295 triangles");
     file.write_all(&count.to_le_bytes())?;
 
     for t in triangles {
