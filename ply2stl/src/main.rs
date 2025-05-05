@@ -28,7 +28,7 @@ struct Cli {
     output: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> std::io::Result<()>{
     let args = Cli::parse();
     println!("args: {:?}", args);
     println!("input: {:?}", args.input);
@@ -38,7 +38,7 @@ fn main() {
         path
     });
 
-    let points = load_xyz(&args.input);
+    let points = load_xyz(&args.input)?;
 
     match reconstruct(&points, args.radius) {
         Some(triangles) => {
@@ -50,4 +50,6 @@ fn main() {
             eprintln!("Exception occurred reconstructing the surface");
         }
     }
+
+    Ok(())
 }
