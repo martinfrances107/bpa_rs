@@ -154,7 +154,9 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
     for c_i in 0..grid.cells.len() {
         let avg_normal = grid.cells[c_i]
             .iter()
-            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| p.borrow().normal.map_or(acc, |n| acc+n ));
+            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| {
+                p.borrow().normal.map_or(acc, |n| acc + n)
+            });
 
         for i in 0..grid.cells[c_i].len() {
             let mut neighborhood = grid.clone().spherical_neighborhood(
@@ -524,8 +526,17 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
         }
     }
     // case 1
-    if let (Some(a_prev), Some(a_next), Some(b_prev), Some(b_next)) = (a.prev.clone(), a.next.clone(), b.prev.clone(), b.next.clone()) {
-        if a_next.as_ref() == b && a_prev.as_ref() == b && b_next.as_ref() == a && b_prev.as_ref() == a {
+    if let (Some(a_prev), Some(a_next), Some(b_prev), Some(b_next)) = (
+        a.prev.clone(),
+        a.next.clone(),
+        b.prev.clone(),
+        b.next.clone(),
+    ) {
+        if a_next.as_ref() == b
+            && a_prev.as_ref() == b
+            && b_next.as_ref() == a
+            && b_prev.as_ref() == a
+        {
             remove(a);
             remove(b);
             return;

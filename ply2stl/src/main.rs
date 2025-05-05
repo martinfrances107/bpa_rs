@@ -28,7 +28,7 @@ struct Cli {
     output: Option<PathBuf>,
 }
 
-fn main() -> std::io::Result<()>{
+fn main() -> std::io::Result<()> {
     let args = Cli::parse();
     println!("args: {:?}", args);
     println!("input: {:?}", args.input);
