@@ -578,7 +578,7 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
 
 pub(crate) fn find_reverse_edge_on_front(edge: &MeshEdge) -> Option<MeshEdge> {
     for e in &edge.a.edges {
-        if e.a == edge.a {
+        if e.a == edge.b {
             return Some(e.clone());
         }
     }
