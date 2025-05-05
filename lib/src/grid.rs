@@ -524,10 +524,8 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
         }
     }
     // case 1
-    if let (Some(a_prev), Some(b_next)) = (a.prev.clone(), b.next.clone()) {
-        if a_prev.as_ref() == b && b_next.as_ref() == a {
-            a.next = b.next.clone();
-            b.prev = a.prev.clone();
+    if let (Some(a_prev), Some(a_next), Some(b_prev), Some(b_next)) = (a.prev.clone(), a.next.clone(), b.prev.clone(), b.next.clone()) {
+        if a_next.as_ref() == b && a_prev.as_ref() == b && b_next.as_ref() == a && b_prev.as_ref() == a {
             remove(a);
             remove(b);
             return;
@@ -537,8 +535,8 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
     // case 2
     if let (Some(a_next), Some(b_prev)) = (&a.next, &b.prev) {
         if a_next.as_ref() == b && b_prev.as_ref() == a {
-            a.prev = b.prev.clone();
-            b.next = a.next.clone();
+            a.prev.as_mut().unwrap().next = b.next.clone();
+            b.next.as_mut().unwrap().prev = a.prev.clone();
             remove(a);
             remove(b);
             return;
@@ -556,7 +554,6 @@ pub(crate) fn glue(a: &mut MeshEdge, b: &mut MeshEdge, front: &[MeshEdge]) {
     }
 
     // case 3/4
-    // a->prev->next = b->next;
     if let Some(a_prev) = &mut a.prev {
         a_prev.next = b.next.clone();
     }
