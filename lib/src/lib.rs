@@ -39,6 +39,11 @@ use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
 
+thread_local! {
+  static COUNTER3: std::cell::Cell<i32> = const { std::cell::Cell::new(0) };
+
+}
+
 // Why  Rc<RefCell<MeshPoint>>?
 //
 // When looping over neighborhood points the design needs mutable access
@@ -46,7 +51,7 @@ use mesh::MeshPoint;
 //
 // for j in 0..neighborhood.len() {
 //     for k in 0..neighborhood.len() {
-//       // Mutable access.
+//      /* Mutable access. */
 //     }
 // }
 //
@@ -95,21 +100,43 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
         }
         Some(SeedResult { f, ball_center }) => {
             let mut triangles: Vec<Triangle> = Vec::new();
-            let mut edges: Vec<MeshEdge> = Vec::new();
+            let mut edges: Vec<Rc<RefCell<MeshEdge>>> = Vec::new();
             output_triangle(&f, &mut triangles);
 
-            // auto& e0 = edges.emplace_back(MeshEdge{seed[0], seed[1], seed[2], ballCenter});
             let mut seed = f.0;
-            let mut e0 = MeshEdge::new(&seed[0], &seed[1], &seed[2].clone(), ball_center);
-            let mut e1 = MeshEdge::new(&seed[1], &seed[2], &seed[0].clone(), ball_center);
-            let mut e2 = MeshEdge::new(&seed[2], &seed[0], &seed[1].clone(), ball_center);
+            // println!("seed {}", seed[0]);
+            // println!("seed {}", seed[1]);
+            // println!("seed {}", seed[2]);
+            let e0 = Rc::new(RefCell::new(MeshEdge::new(
+                &seed[0],
+                &seed[1],
+                &seed[2].clone(),
+                ball_center,
+            )));
+            edges.push(e0.clone());
 
-            e0.prev = Some(Box::new(e2.clone()));
-            e1.next = Some(Box::new(e2.clone()));
-            e0.next = Some(Box::new(e1.clone()));
-            e2.prev = Some(Box::new(e1.clone()));
-            e1.prev = Some(Box::new(e0.clone()));
-            e2.next = Some(Box::new(e0.clone()));
+            let e1 = Rc::new(RefCell::new(MeshEdge::new(
+                &seed[1],
+                &seed[2],
+                &seed[0].clone(),
+                ball_center,
+            )));
+            edges.push(e1.clone());
+
+            let e2 = Rc::new(RefCell::new(MeshEdge::new(
+                &seed[2],
+                &seed[0],
+                &seed[1].clone(),
+                ball_center,
+            )));
+            edges.push(e2.clone());
+
+            e0.borrow_mut().prev = Some(e2.clone());
+            e1.borrow_mut().next = Some(e2.clone());
+            e0.borrow_mut().next = Some(e1.clone());
+            e2.borrow_mut().prev = Some(e1.clone());
+            e1.borrow_mut().prev = Some(e0.clone());
+            e2.borrow_mut().next = Some(e0.clone());
 
             seed[0].edges = vec![e0.clone(), e2.clone()];
             seed[1].edges = vec![e0.clone(), e1.clone()];
@@ -123,25 +150,52 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             }
 
             let debug = true;
+            println!("initial front {} ", front.len());
             loop {
+                if let Err(e) = COUNTER3.try_with(|counter3| {
+                    counter3.set(counter3.get() + 1);
+                }) {
+                    // Elsewhere COUNTER's destructor has been called!!!``
+                    eprintln!("Access error incrementing debug counter: {:?}", e);
+                }
+
+                if COUNTER3.get() > 5 {
+                    panic!("counter >50 with a tetrahedral");
+                }
+
                 let e_ij = get_active_edge(&mut front);
                 if e_ij.is_none() {
                     break;
                 }
 
+                println!("active edge e_ij ");
+                let ae = e_ij.clone().unwrap();
+                println!(
+                    "e_ij a {} {} {}",
+                    ae.borrow().a.pos.x,
+                    ae.borrow().a.pos.y,
+                    ae.borrow().a.pos.z
+                );
+                println!(
+                    "e_ij b {} {} {}",
+                    ae.borrow().b.pos.x,
+                    ae.borrow().b.pos.y,
+                    ae.borrow().b.pos.z
+                );
+
                 if debug {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
                         &[Triangle([
-                            e_ij.clone().unwrap().a.pos,
-                            e_ij.clone().unwrap().a.pos,
-                            e_ij.clone().unwrap().b.pos,
+                            e_ij.clone().unwrap().borrow().a.pos,
+                            e_ij.clone().unwrap().borrow().a.pos,
+                            e_ij.clone().unwrap().borrow().b.pos,
                         ])],
                     )
                     .expect("Failed(debug) to write front to file");
                 }
 
-                let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
+                let o_k = ball_pivot(e_ij.clone().unwrap(), &mut grid, radius);
                 if debug {
                     save_triangles_ascii(&PathBuf::from("current_mesh.stl"), &triangles)
                         .expect("Failed(debug) writing current mesh to file");
@@ -154,31 +208,32 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                         output_triangle(
                             &MeshFace([
-                                e_ij.clone().unwrap().a,
+                                e_ij.clone().unwrap().borrow().a.clone(),
                                 o_k.p.borrow().clone(),
-                                e_ij.clone().unwrap().b,
+                                e_ij.clone().unwrap().borrow().b.clone(),
                             ]),
                             &mut triangles,
                         );
 
-                        let (mut e_ik, mut e_kj) = join(
-                            &mut e_ij.clone().unwrap(),
+                        let (e_ik, e_kj) = join(
+                            e_ij.clone().unwrap(),
                             &mut o_k.p.borrow().clone(),
                             o_k.center,
                             &mut front,
                             &mut edges,
                         );
-
-                        if let Some(mut e_ki) = find_reverse_edge_on_front(&e_ik) {
-                            glue(&mut e_ik, &mut e_ki, &front);
+println!("checking glue");
+                        if let Some(e_ki) = find_reverse_edge_on_front(&e_ik.clone()) {
+                            glue(e_ik.clone(), e_ki, &front);
                         }
 
-                        if let Some(mut e_jk) = find_reverse_edge_on_front(&e_kj) {
-                            glue(&mut e_kj, &mut e_jk, &front);
+                        if let Some(e_jk) = find_reverse_edge_on_front(&e_kj.clone()) {
+                            glue(e_kj.clone(), e_jk.clone(), &front);
                         }
                     }
                 }
                 if !boundary_test {
+println!("not checking glue");
                     if debug {
                         let cb_points = match o_k {
                             Some(pr) => {
@@ -191,7 +246,24 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         save_points(&PathBuf::from("current_boundary.ply"), &cb_points)
                             .expect("could not save current boundary");
                     }
-                    e_ij.unwrap().status = EdgeStatus::Boundary;
+                    e_ij.unwrap().borrow_mut().status = EdgeStatus::Boundary;
+                }
+
+                println!("looping front {} ", front.len());
+                for f in &front {
+                    println!(
+                        "a {} {} {}",
+                        f.borrow().a.pos.x,
+                        f.borrow().a.pos.y,
+                        f.borrow().a.pos.z
+                    );
+                    println!(
+                        "b {} {} {}",
+                        f.borrow().b.pos.x,
+                        f.borrow().b.pos.y,
+                        f.borrow().b.pos.z
+                    );
+                    println!("");
                 }
             }
 
@@ -199,8 +271,12 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 let mut boundary_edges = vec![];
 
                 for e in front {
-                    if e.status == EdgeStatus::Boundary {
-                        boundary_edges.push(Triangle([e.a.pos, e.a.pos, e.b.pos]));
+                    if e.borrow().status == EdgeStatus::Boundary {
+                        boundary_edges.push(Triangle([
+                            e.borrow().a.pos,
+                            e.borrow().a.pos,
+                            e.borrow().b.pos,
+                        ]));
                     }
                 }
                 save_triangles_ascii(&PathBuf::from("boundary_edges.stl"), &boundary_edges)

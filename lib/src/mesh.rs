@@ -1,3 +1,6 @@
+use core::cell::RefCell;
+use std::rc::Rc;
+
 use glam::Vec3;
 
 use crate::Point;
@@ -7,7 +10,7 @@ pub(crate) struct MeshPoint {
     pub(crate) pos: Vec3,
     pub(crate) normal: Option<Vec3>,
     pub(crate) used: bool,
-    pub(crate) edges: Vec<MeshEdge>,
+    pub(crate) edges: Vec<Rc<RefCell<MeshEdge>>>,
 }
 
 impl MeshPoint {
@@ -46,8 +49,8 @@ pub(crate) struct MeshEdge {
     pub(crate) b: MeshPoint,
     pub(crate) opposite: MeshPoint,
     pub(crate) center: Vec3,
-    pub(crate) prev: Option<Box<MeshEdge>>,
-    pub(crate) next: Option<Box<MeshEdge>>,
+    pub(crate) prev: Option<Rc<RefCell<MeshEdge>>>,
+    pub(crate) next: Option<Rc<RefCell<MeshEdge>>>,
     pub(crate) status: EdgeStatus,
 }
 
