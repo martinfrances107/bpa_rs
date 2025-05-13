@@ -243,7 +243,7 @@ thread_local! {
 }
 
 pub(crate) fn ball_pivot(
-    e: Rc<RefCell<MeshEdge>>,
+    e: &Rc<RefCell<MeshEdge>>,
     grid: &mut Grid,
     radius: f32,
 ) -> Option<PivotResult> {
@@ -260,7 +260,7 @@ pub(crate) fn ball_pivot(
         counter.set(counter.get() + 1);
     }) {
         // Elsewhere COUNTER's destructor has been called!!!``
-        eprintln!("Access error incrementing debug counter: {:?}", e);
+        eprintln!("Access error incrementing debug counter: {e:?}");
     }
 
     println!("counter {}", COUNTER.get());
@@ -350,7 +350,7 @@ pub(crate) fn ball_pivot(
                 counter2.set(counter2.get() + 1);
             }) {
                 // Elsewhere COUNTER2's destructor has been called!!!``
-                eprintln!("Access error incrementing debug counter: {:?}", e);
+                eprintln!("Access error incrementing debug counter: {e:?}");
             }
             save_triangles_ascii(
                 &PathBuf::from(format!("{}_{}_face.stl", COUNTER.get(), COUNTER2.get())),
@@ -485,7 +485,7 @@ pub(crate) fn on_front(p: &MeshPoint) -> bool {
 }
 
 // Removed edge from consideration
-fn remove(e: Rc<RefCell<MeshEdge>>) {
+fn remove(e: &Rc<RefCell<MeshEdge>>) {
     e.borrow_mut().status = EdgeStatus::Inner;
 }
 
@@ -494,7 +494,7 @@ pub(crate) fn output_triangle(f: &MeshFace, triangles: &mut Vec<Triangle>) {
 }
 
 pub(crate) fn join(
-    e_ij: Rc<RefCell<MeshEdge>>,
+    e_ij: &Rc<RefCell<MeshEdge>>,
     o_k: &mut MeshPoint,
     o_k_ball_center: Vec3,
     front: &mut Vec<Rc<RefCell<MeshEdge>>>,
@@ -570,12 +570,12 @@ pub(crate) fn join(
     front.push(e_kj.clone());
     remove(e_ij);
 
-    (e_ik.clone(), e_kj.clone())
+    (e_ik, e_kj)
 }
 
 pub(crate) fn glue(
-    a: Rc<RefCell<MeshEdge>>,
-    b: Rc<RefCell<MeshEdge>>,
+    a: &Rc<RefCell<MeshEdge>>,
+    b: &Rc<RefCell<MeshEdge>>,
     front: &[Rc<RefCell<MeshEdge>>],
 ) {
     // TODO replace this boolean with a proper check
@@ -613,35 +613,35 @@ pub(crate) fn glue(
         b.borrow().prev.clone(),
         b.borrow().next.clone(),
     ) {
-        if a_next == b
+        if a_next == *b
             && *a_prev.borrow() == *b.borrow()
             && *b_next.borrow() == *a.borrow()
             && *b_prev.borrow() == *a.borrow()
         {
-            remove(a.clone());
-            remove(b.clone());
+            remove(&a.clone());
+            remove(&b.clone());
             return;
         }
     }
 
     // case 2
-    if let (Some(a_next), Some(b_prev)) = (a.clone().borrow().next.clone(), b.borrow().prev.clone())
+    if let (Some(a_next), Some(b_prev)) = (a.borrow().next.clone(), b.borrow().prev.clone())
     {
         if *a_next.borrow() == *b.borrow() && *b_prev.borrow() == *a.borrow() {
             a.borrow_mut().prev.as_mut().unwrap().borrow_mut().next = b.borrow().next.clone();
             b.borrow_mut().next.as_mut().unwrap().borrow_mut().prev = a.borrow().prev.clone();
-            remove(a.clone());
-            remove(b.clone());
+            remove(&a.clone());
+            remove(&b.clone());
             return;
         }
     }
 
     if let (Some(a_prev), Some(b_next)) = (&a.borrow().prev, &b.borrow().next) {
-        if *a_prev == b && *b_next == a {
+        if *a_prev == *b && *b_next == *a {
             a.borrow_mut().next = b.borrow().next.clone();
             b.borrow_mut().prev = a.borrow().prev.clone();
-            remove(a.clone());
-            remove(b.clone());
+            remove(&a.clone());
+            remove(&b.clone());
             return;
         }
     }

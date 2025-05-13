@@ -156,13 +156,10 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     counter3.set(counter3.get() + 1);
                 }) {
                     // Elsewhere COUNTER's destructor has been called!!!``
-                    eprintln!("Access error incrementing debug counter: {:?}", e);
+                    eprintln!("Access error incrementing debug counter: {e:?}");
                 }
 
-                if COUNTER3.get() > 5 {
-                    panic!("counter >50 with a tetrahedral");
-                }
-
+                debug_assert!((COUNTER3.get() <= 5), "counter >5 with a tetrahedral");
                 let e_ij = get_active_edge(&mut front);
                 if e_ij.is_none() {
                     break;
@@ -195,7 +192,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     .expect("Failed(debug) to write front to file");
                 }
 
-                let o_k = ball_pivot(e_ij.clone().unwrap(), &mut grid, radius);
+                let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
                 if debug {
                     save_triangles_ascii(&PathBuf::from("current_mesh.stl"), &triangles)
                         .expect("Failed(debug) writing current mesh to file");
@@ -216,7 +213,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         );
 
                         let (e_ik, e_kj) = join(
-                            e_ij.clone().unwrap(),
+                            &e_ij.clone().unwrap(),
                             &mut o_k.p.borrow().clone(),
                             o_k.center,
                             &mut front,
@@ -224,11 +221,11 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         );
 println!("checking glue");
                         if let Some(e_ki) = find_reverse_edge_on_front(&e_ik.clone()) {
-                            glue(e_ik.clone(), e_ki, &front);
+                            glue(&e_ik, &e_ki, &front);
                         }
 
                         if let Some(e_jk) = find_reverse_edge_on_front(&e_kj.clone()) {
-                            glue(e_kj.clone(), e_jk.clone(), &front);
+                            glue(&e_kj.clone(), &e_jk.clone(), &front);
                         }
                     }
                 }
@@ -263,7 +260,7 @@ println!("not checking glue");
                         f.borrow().b.pos.y,
                         f.borrow().b.pos.z
                     );
-                    println!("");
+                    println!();
                 }
             }
 
