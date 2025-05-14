@@ -30,7 +30,7 @@ struct Cli {
 
 fn main() -> std::io::Result<()> {
     let args = Cli::parse();
-    println!("args: {:?}", args);
+    println!("args: {args:?}");
     println!("input: {:?}", args.input);
     let output = args.output.clone().unwrap_or_else(|| {
         let mut path = args.input.clone();
