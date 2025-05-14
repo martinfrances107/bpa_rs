@@ -314,7 +314,7 @@ pub(crate) fn ball_pivot(
     println!("ball pivot about to start neighborhood loop");
     'next_neighborhood: for p in &neighborhood {
         println!("neighborhood loop");
-        i += i;
+        i += 1;
         let new_face_normal =
             Triangle([e.borrow().b.pos, e.borrow().a.pos, p.borrow().pos]).normal();
 
