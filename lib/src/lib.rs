@@ -200,7 +200,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                 let mut boundary_test = false;
                 if let Some(o_k) = &o_k {
-                    println!("reconstruct boundary test ok = {o_k:#?}");
+                    // println!("reconstruct boundary test ok = {o_k:#?}");
                     if not_used(&o_k.p.borrow()) || on_front(&o_k.p.borrow()) {
                         boundary_test = true;
 

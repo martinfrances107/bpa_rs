@@ -340,7 +340,7 @@ pub(crate) fn ball_pivot(
             if debug {
                 writeln!(
                     &mut ss,
-                    "{i}.     {:?} center computation failed\n",
+                    "{i}.     {:?} center computation failed",
                     p.borrow().pos
                 )
                 .expect("could not write debug");
@@ -383,7 +383,7 @@ pub(crate) fn ball_pivot(
             if debug {
                 writeln!(
                     &mut ss,
-                    "{i}.    {:?} ball center {c:?} underneath triangle\n",
+                    "{i}.    {:?} ball center {c:?} underneath triangle",
                     p.borrow().pos
                 )
                 .expect("could not write debug");
@@ -403,7 +403,7 @@ pub(crate) fn ball_pivot(
                 || *other_point == e.borrow().b
             {
                 if debug {
-                    writeln!(&mut ss, "{i}.    {:?} inner edge exists\n", p.borrow().pos)
+                    writeln!(&mut ss, "{i}.    {:?} inner edge exists", p.borrow().pos)
                         .expect("could to write debug");
                 }
                 // This was a GOTO into the original c++ source.
@@ -430,7 +430,7 @@ pub(crate) fn ball_pivot(
         if debug {
             writeln!(
                     &mut ss,
-                    "{i}.   {}  center {c:?}  angle {angle:?} next center face dot {new_center_face_dot}",
+                    "{i}.   {}  center {c:?} angle {angle:?} next center face dot {new_center_face_dot}",
                     p.borrow().pos,
                 )
                 .expect("Failed to output debug");
@@ -454,6 +454,7 @@ pub(crate) fn ball_pivot(
                         eprintln!("debug: trying to display a candidate point which doe not exist");
                     }
                 }
+                println!("{},", ss);
             }
 
             return Some(PivotResult {
@@ -463,10 +464,14 @@ pub(crate) fn ball_pivot(
         } else if debug {
             writeln!(
                 &mut ss,
-                "found candidate {smallest_number} but bail int not empty",
+                "        found candidate {smallest_number} but bail int not empty",
             )
             .expect("failed writing debug");
         }
+    }
+
+    if debug {
+        println!("{}", ss);
     }
 
     None
