@@ -454,7 +454,7 @@ pub(crate) fn ball_pivot(
                         eprintln!("debug: trying to display a candidate point which doe not exist");
                     }
                 }
-                println!("{},", ss);
+                println!("{}",ss);
             }
 
             return Some(PivotResult {
