@@ -168,13 +168,13 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 println!("active edge e_ij ");
                 let ae = e_ij.clone().unwrap();
                 println!(
-                    "e_ij a {} {} {}",
+                    "reconstruct: e_ij a {} {} {}",
                     ae.borrow().a.pos.x,
                     ae.borrow().a.pos.y,
                     ae.borrow().a.pos.z
                 );
                 println!(
-                    "e_ij b {} {} {}",
+                    "reconstruct: e_ij b {} {} {}",
                     ae.borrow().b.pos.x,
                     ae.borrow().b.pos.y,
                     ae.borrow().b.pos.z
@@ -200,6 +200,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                 let mut boundary_test = false;
                 if let Some(o_k) = &o_k {
+                    println!("reconstruct boundary test ok = {o_k:#?}");
                     if not_used(&o_k.p.borrow()) || on_front(&o_k.p.borrow()) {
                         boundary_test = true;
 
@@ -219,7 +220,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                             &mut front,
                             &mut edges,
                         );
-println!("checking glue");
+                        println!("checking glue");
                         if let Some(e_ki) = find_reverse_edge_on_front(&e_ik.clone()) {
                             glue(&e_ik, &e_ki, &front);
                         }
@@ -230,7 +231,7 @@ println!("checking glue");
                     }
                 }
                 if !boundary_test {
-println!("not checking glue");
+                    println!("not checking glue");
                     if debug {
                         let cb_points = match o_k {
                             Some(pr) => {

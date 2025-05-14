@@ -232,6 +232,7 @@ pub(crate) fn get_active_edge(
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct PivotResult {
     pub(crate) p: Rc<RefCell<MeshPoint>>,
     pub(crate) center: Vec3,
@@ -290,20 +291,22 @@ pub(crate) fn ball_pivot(
         .expect("Failed to save points");
     }
 
-    let mut small_angle = f32::MAX;
+    let mut smallest_angle = f32::MAX;
     let mut points_with_small_angle = None;
     let mut center_of_smallest = Vec3::ZERO;
     let mut ss = String::new();
 
     if debug {
-        println!(
+        writeln!(
+            ss,
             "{}.pivoting edge a={} b={} op={}. testing {} neighbors",
             COUNTER.get(),
             e.borrow().a.pos,
             e.borrow().b.pos,
             e.borrow().opposite.pos,
             neighborhood.len()
-        );
+        )
+        .expect("could not write debug");
     }
 
     let mut i = 0;
@@ -319,7 +322,7 @@ pub(crate) fn ball_pivot(
         // same half-space
         if p.borrow()
             .normal
-            .is_some_and(|n| n.dot(new_face_normal) < 0.0)
+            .is_some_and(|n| new_face_normal.dot(n) < 0.0)
         {
             continue;
         }
@@ -389,8 +392,6 @@ pub(crate) fn ball_pivot(
         }
         // this check is not in the paper: points to which we already have an inner
         // edge are not considered
-        // for (const auto* ee : p->edges) {
-
         for ee in &p.borrow().edges {
             // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
             let other_point = if ee.borrow().a == *p.borrow() {
@@ -411,66 +412,63 @@ pub(crate) fn ball_pivot(
             }
         }
 
+        let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
+        if new_center_vec
+            .cross(old_center_vec)
+            .dot(e.borrow().a.pos - e.borrow().b.pos)
+            < 0.0_f32
         {
-            let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
-            if new_center_vec
-                .cross(old_center_vec)
-                .dot(e.borrow().a.pos - e.borrow().b.pos)
-                < 0.0_f32
-            {
-                angle += std::f32::consts::PI;
-            }
-            if angle < small_angle {
-                small_angle = angle;
-                points_with_small_angle = Some(p.clone());
-                center_of_smallest = c;
-                smallest_number = i;
-            }
+            angle += std::f32::consts::PI;
+        }
+        if angle < smallest_angle {
+            smallest_angle = angle;
+            points_with_small_angle = Some(p.clone());
+            center_of_smallest = c;
+            smallest_number = i;
+        }
 
-            if debug {
-                writeln!(
+        if debug {
+            writeln!(
                     &mut ss,
                     "{i}.   {}  center {c:?}  angle {angle:?} next center face dot {new_center_face_dot}",
                     p.borrow().pos,
                 )
                 .expect("Failed to output debug");
-            }
-        }
-
-        if small_angle != f32::MAX {
-            if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
-                if debug {
-                    writeln!(&mut ss, "       picking point {smallest_number}")
-                        .expect("Could not render debug");
-                    match &points_with_small_angle {
-                        Some(candidate_point) => {
-                            save_points(
-                                &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
-                                &vec![Point::new(candidate_point.borrow().pos)],
-                            )
-                            .expect("Failed(debug) to write ball_center file");
-                        }
-                        None => {
-                            eprintln!(
-                                "debug: trying to display a candidate point which doe not exist"
-                            );
-                        }
-                    }
-                }
-
-                return Some(PivotResult {
-                    p: points_with_small_angle.unwrap(),
-                    center: center_of_smallest,
-                });
-            } else if debug {
-                writeln!(
-                    &mut ss,
-                    "found candidate {smallest_number} but bail int not empty",
-                )
-                .expect("failed writing debug");
-            }
         }
     }
+
+    if smallest_angle != f32::MAX {
+        if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
+            if debug {
+                writeln!(&mut ss, "       picking point {smallest_number}")
+                    .expect("Could not render debug");
+                match &points_with_small_angle {
+                    Some(candidate_point) => {
+                        save_points(
+                            &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
+                            &vec![Point::new(candidate_point.borrow().pos)],
+                        )
+                        .expect("Failed(debug) to write ball_center file");
+                    }
+                    None => {
+                        eprintln!("debug: trying to display a candidate point which doe not exist");
+                    }
+                }
+            }
+
+            return Some(PivotResult {
+                p: points_with_small_angle.unwrap(),
+                center: center_of_smallest,
+            });
+        } else if debug {
+            writeln!(
+                &mut ss,
+                "found candidate {smallest_number} but bail int not empty",
+            )
+            .expect("failed writing debug");
+        }
+    }
+
     None
 }
 
@@ -540,26 +538,26 @@ pub(crate) fn join(
 
     println!("front push ");
     println!(
-        "e_ik a {} {} {}",
+        "join e_ik a {} {} {}",
         e_ik.borrow().a.pos.x,
         e_ik.borrow().a.pos.y,
         e_ik.borrow().a.pos.z
     );
     println!(
-        "e_ik b {} {} {}",
+        "join e_ik b {} {} {}",
         e_ik.borrow().b.pos.x,
         e_ik.borrow().b.pos.y,
         e_ik.borrow().b.pos.z
     );
     println!("------");
     println!(
-        "e_kj a {} {} {}",
+        "join e_kj a {} {} {}",
         e_kj.borrow().a.pos.x,
         e_kj.borrow().a.pos.y,
         e_kj.borrow().a.pos.z
     );
     println!(
-        "e_kj b {} {} {}",
+        "join e_kj b {} {} {}",
         e_kj.borrow().b.pos.x,
         e_kj.borrow().b.pos.y,
         e_kj.borrow().b.pos.z
@@ -625,8 +623,7 @@ pub(crate) fn glue(
     }
 
     // case 2
-    if let (Some(a_next), Some(b_prev)) = (a.borrow().next.clone(), b.borrow().prev.clone())
-    {
+    if let (Some(a_next), Some(b_prev)) = (a.borrow().next.clone(), b.borrow().prev.clone()) {
         if *a_next.borrow() == *b.borrow() && *b_prev.borrow() == *a.borrow() {
             a.borrow_mut().prev.as_mut().unwrap().borrow_mut().next = b.borrow().next.clone();
             b.borrow_mut().next.as_mut().unwrap().borrow_mut().prev = a.borrow().prev.clone();
