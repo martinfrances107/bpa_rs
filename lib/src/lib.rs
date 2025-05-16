@@ -19,6 +19,7 @@ mod test;
 use core::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::vec;
 
 use glam::Vec3;
 use grid::Grid;
@@ -74,14 +75,18 @@ impl Triangle {
 #[derive(Debug)]
 pub struct Point {
     pos: Vec3,
-    normal: Option<Vec3>,
+    normal: Vec3,
 }
 
-impl Point {
-    const fn new(pos: Vec3) -> Self {
-        Self { pos, normal: None }
-    }
-}
+// This is used in testing only.
+// This allows normal to default to zero which in production is
+// seldom the case.
+// #[cfg(test)]
+// impl Point {
+//     const fn new(pos: Vec3) -> Self {
+//         Self { pos, normal: vec![0.0; 3] }
+//     }
+// }
 
 /// Returns a mesh from a point cloud.
 ///
@@ -200,8 +205,23 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                 let mut boundary_test = false;
                 if let Some(o_k) = &o_k {
-                    // println!("reconstruct boundary test ok = {o_k:#?}");
-                    if not_used(&o_k.p.borrow()) || on_front(&o_k.p.borrow()) {
+                    println!(
+                        "reconstruct boundary test ok = {} {} {}",
+                        o_k.p.borrow().pos.x,
+                        o_k.p.borrow().pos.y,
+                        o_k.p.borrow().pos.z
+                    );
+                    let nu = not_used(&o_k.p.borrow());
+                    println!("reconstruct nu = {nu:#?}");
+                    // println!("reconstruct edges = {}", o_k.p.borrow().edges);
+                    let ok_edges = o_k.p.borrow().edges.clone();
+                    println!("reconstruct edges.len = {}", ok_edges.len());
+                    for o_k_e in ok_edges {
+                        println!("reconstruct edges = {:?}", o_k_e.borrow());
+                    }
+                    let of = on_front(&o_k.p.borrow());
+                    println!("reconstruct of = {of:#?}");
+                    if nu || of {
                         boundary_test = true;
 
                         output_triangle(
@@ -233,16 +253,11 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 if !boundary_test {
                     println!("not checking glue");
                     if debug {
-                        let cb_points = match o_k {
-                            Some(pr) => {
-                                vec![Point::new(pr.p.borrow().pos)]
-                            }
-                            None => {
-                                vec![]
-                            }
-                        };
-                        save_points(&PathBuf::from("current_boundary.ply"), &cb_points)
-                            .expect("could not save current boundary");
+                        save_points(
+                            &PathBuf::from("current_boundary.ply"),
+                            &vec![o_k.unwrap().p.borrow().pos],
+                        )
+                        .expect("could not save current boundary");
                     }
                     e_ij.unwrap().borrow_mut().status = EdgeStatus::Boundary;
                 }

@@ -8,16 +8,19 @@ use crate::Point;
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct MeshPoint {
     pub(crate) pos: Vec3,
-    pub(crate) normal: Option<Vec3>,
+    pub(crate) normal: Vec3,
     pub(crate) used: bool,
     pub(crate) edges: Vec<Rc<RefCell<MeshEdge>>>,
 }
 
+// Defining is MeshPoint without a normal
+// is useful for testing ONLY.
+#[cfg(test)]
 impl MeshPoint {
     pub(crate) const fn new(pos: Vec3) -> Self {
         Self {
             pos,
-            normal: None,
+            normal: glam::vec3(0.0, 0.0, 0.0),
             used: false,
             edges: vec![],
         }

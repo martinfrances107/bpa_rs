@@ -154,9 +154,8 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
     for c_i in 0..grid.cells.len() {
         let avg_normal = grid.cells[c_i]
             .iter()
-            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| {
-                p.borrow().normal.map_or(acc, |n| acc + n)
-            });
+            .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| acc + p.borrow().normal)
+            .normalize();
 
         for i in 0..grid.cells[c_i].len() {
             let mut neighborhood = grid.clone().spherical_neighborhood(
@@ -280,9 +279,9 @@ pub(crate) fn ball_pivot(
         )
         .expect("Err - writing to pivot_edge");
 
-        let mut points = Vec::with_capacity(neighborhood.len());
+        let mut points: Vec<Vec3> = Vec::with_capacity(neighborhood.len());
         for n in &neighborhood {
-            points.push(Point::new(n.borrow().pos));
+            points.push(n.borrow().pos);
         }
         save_points(
             &PathBuf::from(format!("{}_neighborhood.ply", COUNTER.get())),
@@ -320,10 +319,7 @@ pub(crate) fn ball_pivot(
 
         // this check is not in the paper: all points' normals must point into the
         // same half-space
-        if p.borrow()
-            .normal
-            .is_some_and(|n| new_face_normal.dot(n) < 0.0)
-        {
+        if new_face_normal.dot(p.borrow().normal) < 0.0 {
             continue;
         }
 
@@ -370,7 +366,7 @@ pub(crate) fn ball_pivot(
                     COUNTER.get(),
                     COUNTER2.get()
                 )),
-                &vec![Point::new(c)],
+                &vec![c],
             )
             .expect("Failed(debug) to write ball_center file");
         }
@@ -421,6 +417,7 @@ pub(crate) fn ball_pivot(
             angle += std::f32::consts::PI;
         }
         if angle < smallest_angle {
+            writeln!(&mut ss, "ball pivot angle < smallest angle").expect("could not write debug");
             smallest_angle = angle;
             points_with_small_angle = Some(p.clone());
             center_of_smallest = c;
@@ -446,7 +443,7 @@ pub(crate) fn ball_pivot(
                     Some(candidate_point) => {
                         save_points(
                             &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
-                            &vec![Point::new(candidate_point.borrow().pos)],
+                            &vec![candidate_point.borrow().pos],
                         )
                         .expect("Failed(debug) to write ball_center file");
                     }
@@ -454,7 +451,7 @@ pub(crate) fn ball_pivot(
                         eprintln!("debug: trying to display a candidate point which doe not exist");
                     }
                 }
-                println!("{}",ss);
+                println!("{}", ss);
             }
 
             return Some(PivotResult {
