@@ -151,21 +151,20 @@ pub(crate) struct SeedResult {
 }
 
 pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult> {
-    for c_i in 0..grid.cells.len() {
-        let avg_normal = grid.cells[c_i]
-            .iter()
+    for cell in &grid.cells {
+        let avg_normal = cell.iter()
             .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| acc + p.borrow().normal)
             .normalize();
 
-        for i in 0..grid.cells[c_i].len() {
+        for p1 in cell {
             let mut neighborhood = grid.clone().spherical_neighborhood(
-                &grid.cells[c_i][i].borrow().pos,
-                &[grid.cells[c_i][i].borrow().pos],
+                &p1.borrow().pos,
+                &vec![p1.borrow().pos],
             );
 
             neighborhood.sort_by(|a, b| {
-                if (a.borrow().pos - grid.cells[c_i][i].borrow().pos).length_squared()
-                    < (b.borrow().pos - grid.cells[c_i][i].borrow().pos).length_squared()
+                if (a.borrow().pos - p1.borrow().pos).length_squared()
+                    < (b.borrow().pos - p1.borrow().pos).length_squared()
                 {
                     std::cmp::Ordering::Less
                 } else {
@@ -173,18 +172,18 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
                 }
             });
 
-            for j in 0..neighborhood.len() {
-                for k in 0..neighborhood.len() {
-                    if neighborhood[j] == neighborhood[k] {
+            for p2 in neighborhood.clone() {
+                for p3 in neighborhood.clone() {
+                    if p2 == p3 {
                         continue;
                     }
 
                     // only accept triangles which's normal points into the same
                     // half-space as the average normal of this cell's points
                     let f = MeshFace([
-                        grid.cells[c_i][i].borrow().clone(),
-                        neighborhood[j].borrow().clone(),
-                        neighborhood[k].borrow().clone(),
+                        p1.borrow().clone(),
+                        p2.borrow().clone(),
+                        p3.borrow().clone(),
                     ]);
 
                     if f.normal().dot(avg_normal) < 0.0 {
@@ -193,12 +192,9 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
                     let ball_center = compute_ball_center(&f, radius);
                     if let Some(ball_center) = ball_center {
                         if ball_is_empty(&ball_center, &neighborhood, radius) {
-                            let mut p_1 = grid.cells[c_i][i].borrow_mut();
-                            p_1.used = true;
-                            let mut n_j = neighborhood[j].borrow_mut();
-                            n_j.used = true;
-                            let mut n_k = neighborhood[k].borrow_mut();
-                            n_k.used = true;
+                            p1.borrow_mut().used = true;
+                            p2.borrow_mut().used = true;
+                            p3.borrow_mut().used = true;
                             return Some(SeedResult { f, ball_center });
                         }
                     }
