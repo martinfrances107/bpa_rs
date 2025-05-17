@@ -93,7 +93,7 @@ pub struct Point {
 /// Main entry point for this library.
 ///
 /// # Panics
-///  (ONLY Debug) File system issues when `saving_points()`'s or `saving_triangle()`'s
+///  (Debug ONLY) File system issues when `saving_points()`'s or `saving_triangle()`'s
 #[must_use]
 pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
     let mut grid = Grid::new(points, radius);

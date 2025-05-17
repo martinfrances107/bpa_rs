@@ -287,7 +287,7 @@ pub(crate) fn ball_pivot(
     }
 
     let mut smallest_angle = f32::MAX;
-    let mut point_with_small_angle = None;
+    let mut point_with_smallest_angle = None;
     let mut center_of_smallest = Vec3::ZERO;
     let mut ss = String::new();
 
@@ -415,7 +415,7 @@ pub(crate) fn ball_pivot(
         if angle < smallest_angle {
             writeln!(&mut ss, "ball pivot angle < smallest angle").expect("could not write debug");
             smallest_angle = angle;
-            point_with_small_angle = Some(p.clone());
+            point_with_smallest_angle = Some(p.clone());
             center_of_smallest = c;
             smallest_number = i;
         }
@@ -435,7 +435,7 @@ pub(crate) fn ball_pivot(
             if debug {
                 writeln!(&mut ss, "       picking point {smallest_number}")
                     .expect("Could not render debug");
-                match &point_with_small_angle {
+                match &point_with_smallest_angle {
                     Some(candidate_point) => {
                         save_points(
                             &PathBuf::from(format!("{}_candidate.ply", COUNTER.get())),
@@ -451,7 +451,7 @@ pub(crate) fn ball_pivot(
             }
 
             return Some(PivotResult {
-                p: point_with_small_angle.unwrap(),
+                p: point_with_smallest_angle.unwrap(),
                 center: center_of_smallest,
             });
         } else if debug {
