@@ -88,9 +88,9 @@ impl Grid {
         // Just an estimate.
         let capacity = self.cell(center_index).len() * 27;
         let mut result = Vec::with_capacity(capacity);
-        for x_off in -1..=1 {
-            for y_off in -1..=1 {
-                for z_off in -1..=1 {
+        for x_off in [-1, 0, 1] {
+            for y_off in [-1, 0, 1] {
+                for z_off in [-1, 0, 1] {
                     let index = center_index + ivec3(x_off, y_off, z_off);
                     if (index.x < 0 || index.x >= self.dims.x)
                         || (index.y < 0 || index.y >= self.dims.y)
@@ -152,15 +152,15 @@ pub(crate) struct SeedResult {
 
 pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult> {
     for cell in &grid.cells {
-        let avg_normal = cell.iter()
+        let avg_normal = cell
+            .iter()
             .fold(Vec3::new(0.0, 0.0, 0.0), |acc, p| acc + p.borrow().normal)
             .normalize();
 
         for p1 in cell {
-            let mut neighborhood = grid.clone().spherical_neighborhood(
-                &p1.borrow().pos,
-                &vec![p1.borrow().pos],
-            );
+            let mut neighborhood = grid
+                .clone()
+                .spherical_neighborhood(&p1.borrow().pos, &vec![p1.borrow().pos]);
 
             neighborhood.sort_by(|a, b| {
                 if (a.borrow().pos - p1.borrow().pos).length_squared()
