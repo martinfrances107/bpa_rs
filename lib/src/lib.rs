@@ -156,7 +156,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
             let debug = true;
             println!("initial front {} ", front.len());
-            loop {
+            while let Some(e_ij) = get_active_edge(&mut front) {
                 if let Err(e) = COUNTER3.try_with(|counter3| {
                     counter3.set(counter3.get() + 1);
                 }) {
@@ -165,13 +165,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
 
                 debug_assert!((COUNTER3.get() <= 5), "counter >5 with a tetrahedral");
-                let e_ij = get_active_edge(&mut front);
-                if e_ij.is_none() {
-                    break;
-                }
 
                 println!("active edge e_ij ");
-                let ae = e_ij.clone().unwrap();
+                let ae = e_ij.clone();
                 println!(
                     "reconstruct: e_ij a {} {} {}",
                     ae.borrow().a.pos.x,
@@ -189,15 +185,15 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
                         &[Triangle([
-                            e_ij.clone().unwrap().borrow().a.pos,
-                            e_ij.clone().unwrap().borrow().a.pos,
-                            e_ij.clone().unwrap().borrow().b.pos,
+                            e_ij.clone().borrow().a.pos,
+                            e_ij.clone().borrow().a.pos,
+                            e_ij.clone().borrow().b.pos,
                         ])],
                     )
                     .expect("Failed(debug) to write front to file");
                 }
 
-                let o_k = ball_pivot(&e_ij.clone().unwrap(), &mut grid, radius);
+                let o_k = ball_pivot(&e_ij.clone(), &mut grid, radius);
                 if debug {
                     save_triangles_ascii(&PathBuf::from("current_mesh.stl"), &triangles)
                         .expect("Failed(debug) writing current mesh to file");
@@ -226,15 +222,15 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                         output_triangle(
                             &MeshFace([
-                                e_ij.clone().unwrap().borrow().a.clone(),
+                                e_ij.clone().borrow().a.clone(),
                                 o_k.p.borrow().clone(),
-                                e_ij.clone().unwrap().borrow().b.clone(),
+                                e_ij.clone().borrow().b.clone(),
                             ]),
                             &mut triangles,
                         );
 
                         let (e_ik, e_kj) = join(
-                            &e_ij.clone().unwrap(),
+                            &e_ij.clone(),
                             &mut o_k.p.borrow().clone(),
                             o_k.center,
                             &mut front,
@@ -259,7 +255,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         )
                         .expect("could not save current boundary");
                     }
-                    e_ij.unwrap().borrow_mut().status = EdgeStatus::Boundary;
+                    e_ij.borrow_mut().status = EdgeStatus::Boundary;
                 }
 
                 println!("looping front {} ", front.len());
