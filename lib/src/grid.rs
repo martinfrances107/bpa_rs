@@ -269,8 +269,8 @@ pub(crate) fn ball_pivot(
             &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
             &[Triangle([
                 e.borrow().a.pos,
+                e.borrow().a.pos,
                 e.borrow().b.pos,
-                e.borrow().opposite.pos,
             ])],
         )
         .expect("Err - writing to pivot_edge");
