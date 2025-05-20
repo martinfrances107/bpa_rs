@@ -391,8 +391,8 @@ pub(crate) fn ball_pivot(
             } else {
                 &ee.borrow().a
             };
-            if ee.borrow().status == EdgeStatus::Inner && *other_point == e.borrow().a
-                || *other_point == e.borrow().b
+            if ee.borrow().status == EdgeStatus::Inner && ( *other_point == e.borrow().a
+                || *other_point == e.borrow().b )
             {
                 if debug {
                     writeln!(&mut ss, "{i}.    {:?} inner edge exists", p.borrow().pos)
