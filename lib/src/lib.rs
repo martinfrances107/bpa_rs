@@ -230,8 +230,8 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         );
 
                         let (e_ik, e_kj) = join(
-                            &e_ij.clone(),
-                            &mut o_k.p.borrow().clone(),
+                            &e_ij,
+                            &mut o_k.p.borrow_mut(),
                             o_k.center,
                             &mut front,
                             &mut edges,
@@ -258,22 +258,22 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     e_ij.borrow_mut().status = EdgeStatus::Boundary;
                 }
 
-                println!("looping front {} ", front.len());
-                for f in &front {
-                    println!(
-                        "a {} {} {}",
-                        f.borrow().a.pos.x,
-                        f.borrow().a.pos.y,
-                        f.borrow().a.pos.z
-                    );
-                    println!(
-                        "b {} {} {}",
-                        f.borrow().b.pos.x,
-                        f.borrow().b.pos.y,
-                        f.borrow().b.pos.z
-                    );
-                    println!();
-                }
+                // println!("looping front {} ", front.len());
+                // for f in &front {
+                //     println!(
+                //         "a {} {} {}",
+                //         f.borrow().a.pos.x,
+                //         f.borrow().a.pos.y,
+                //         f.borrow().a.pos.z
+                //     );
+                //     println!(
+                //         "b {} {} {}",
+                //         f.borrow().b.pos.x,
+                //         f.borrow().b.pos.y,
+                //         f.borrow().b.pos.z
+                //     );
+                //     println!();
+                // }
             }
 
             if debug {
