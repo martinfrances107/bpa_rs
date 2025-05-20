@@ -78,16 +78,6 @@ pub struct Point {
     normal: Vec3,
 }
 
-// This is used in testing only.
-// This allows normal to default to zero which in production is
-// seldom the case.
-// #[cfg(test)]
-// impl Point {
-//     const fn new(pos: Vec3) -> Self {
-//         Self { pos, normal: vec![0.0; 3] }
-//     }
-// }
-
 /// Returns a mesh from a point cloud.
 ///
 /// Main entry point for this library.
@@ -164,7 +154,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     eprintln!("Access error incrementing debug counter: {e:?}");
                 }
 
-                debug_assert!((COUNTER3.get() <= 5), "counter >5 with a tetrahedral");
 
                 println!("active edge e_ij ");
                 let ae = e_ij.clone();
@@ -212,9 +201,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     // println!("reconstruct edges = {}", o_k.p.borrow().edges);
                     let ok_edges = o_k.p.borrow().edges.clone();
                     println!("reconstruct edges.len = {}", ok_edges.len());
-                    for o_k_e in ok_edges {
-                        println!("reconstruct edges = {:?}", o_k_e.borrow());
-                    }
                     let of = on_front(&o_k.p.borrow());
                     println!("reconstruct of = {of:#?}");
                     if nu || of {
@@ -291,6 +277,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 save_triangles_ascii(&PathBuf::from("boundary_edges.stl"), &boundary_edges)
                     .expect("Failed writing boundary_edges to file");
             }
+
+
+
             Some(triangles)
         }
     }
