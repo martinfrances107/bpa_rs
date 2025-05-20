@@ -243,7 +243,6 @@ pub(crate) fn ball_pivot(
     grid: &mut Grid,
     radius: f32,
 ) -> Option<PivotResult> {
-    println!("entry: ball pivot");
     let m = (e.borrow().a.pos + e.borrow().b.pos) / 2.0;
     let old_center_vec = (e.borrow().center - m).normalize();
 
@@ -259,10 +258,6 @@ pub(crate) fn ball_pivot(
         eprintln!("Access error incrementing debug counter: {e:?}");
     }
 
-    println!("counter {}", COUNTER.get());
-    // if COUNTER.get() > 50 {
-    //     panic!("counter >50 with a tetrahedral");
-    // }
     let debug = true;
     if debug {
         save_triangles_ascii(
@@ -306,9 +301,7 @@ pub(crate) fn ball_pivot(
 
     let mut i = 0;
     let mut smallest_number = 0;
-    println!("ball pivot about to start neighborhood loop");
     'next_neighborhood: for p in &neighborhood {
-        println!("neighborhood loop");
         i += 1;
         let new_face_normal =
             Triangle([e.borrow().b.pos, e.borrow().a.pos, p.borrow().pos]).normal();
@@ -447,7 +440,7 @@ pub(crate) fn ball_pivot(
                         eprintln!("debug: trying to display a candidate point which doe not exist");
                     }
                 }
-                println!("{}", ss);
+                println!("{ss}");
             }
 
             return Some(PivotResult {
@@ -464,7 +457,7 @@ pub(crate) fn ball_pivot(
     }
 
     if debug {
-        println!("{}", ss);
+        println!("{ss}");
     }
 
     None
@@ -496,7 +489,6 @@ pub(crate) fn join(
     front: &mut Vec<Rc<RefCell<MeshEdge>>>,
     edges: &mut Vec<Rc<RefCell<MeshEdge>>>,
 ) -> (Rc<RefCell<MeshEdge>>, Rc<RefCell<MeshEdge>>) {
-    println!("join entry");
     let e_ik = Rc::new(RefCell::new(MeshEdge::new(
         &e_ij.borrow().a,
         o_k,
@@ -534,34 +526,6 @@ pub(crate) fn join(
     o_k.edges.push(e_ik.clone());
     o_k.edges.push(e_kj.clone());
 
-    println!("front push ");
-    println!(
-        "join e_ik a {} {} {}",
-        e_ik.borrow().a.pos.x,
-        e_ik.borrow().a.pos.y,
-        e_ik.borrow().a.pos.z
-    );
-    println!(
-        "join e_ik b {} {} {}",
-        e_ik.borrow().b.pos.x,
-        e_ik.borrow().b.pos.y,
-        e_ik.borrow().b.pos.z
-    );
-    println!("------");
-    println!(
-        "join e_kj a {} {} {}",
-        e_kj.borrow().a.pos.x,
-        e_kj.borrow().a.pos.y,
-        e_kj.borrow().a.pos.z
-    );
-    println!(
-        "join e_kj b {} {} {}",
-        e_kj.borrow().b.pos.x,
-        e_kj.borrow().b.pos.y,
-        e_kj.borrow().b.pos.z
-    );
-    println!("------");
-
     front.push(e_ik.clone());
     front.push(e_kj.clone());
     remove(e_ij);
@@ -575,7 +539,6 @@ pub(crate) fn glue(
     front: &[Rc<RefCell<MeshEdge>>],
 ) {
     // TODO replace this boolean with a proper check
-    println!("glue entry");
     let debug = true;
     if debug {
         let mut front_triangles = vec![];

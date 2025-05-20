@@ -154,22 +154,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     eprintln!("Access error incrementing debug counter: {e:?}");
                 }
 
-
-                println!("active edge e_ij ");
-                let ae = e_ij.clone();
-                println!(
-                    "reconstruct: e_ij a {} {} {}",
-                    ae.borrow().a.pos.x,
-                    ae.borrow().a.pos.y,
-                    ae.borrow().a.pos.z
-                );
-                println!(
-                    "reconstruct: e_ij b {} {} {}",
-                    ae.borrow().b.pos.x,
-                    ae.borrow().b.pos.y,
-                    ae.borrow().b.pos.z
-                );
-
                 if debug {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
@@ -190,19 +174,8 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
 
                 let mut boundary_test = false;
                 if let Some(o_k) = &o_k {
-                    println!(
-                        "reconstruct boundary test ok = {} {} {}",
-                        o_k.p.borrow().pos.x,
-                        o_k.p.borrow().pos.y,
-                        o_k.p.borrow().pos.z
-                    );
                     let nu = not_used(&o_k.p.borrow());
-                    println!("reconstruct nu = {nu:#?}");
-                    // println!("reconstruct edges = {}", o_k.p.borrow().edges);
-                    let ok_edges = o_k.p.borrow().edges.clone();
-                    println!("reconstruct edges.len = {}", ok_edges.len());
                     let of = on_front(&o_k.p.borrow());
-                    println!("reconstruct of = {of:#?}");
                     if nu || of {
                         boundary_test = true;
 
@@ -222,7 +195,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                             &mut front,
                             &mut edges,
                         );
-                        println!("checking glue");
                         if let Some(e_ki) = find_reverse_edge_on_front(&e_ik.clone()) {
                             glue(&e_ik, &e_ki, &front);
                         }
@@ -233,7 +205,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     }
                 }
                 if !boundary_test {
-                    println!("not checking glue");
                     if debug {
                         save_points(
                             &PathBuf::from("current_boundary.ply"),
@@ -244,22 +215,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     e_ij.borrow_mut().status = EdgeStatus::Boundary;
                 }
 
-                // println!("looping front {} ", front.len());
-                // for f in &front {
-                //     println!(
-                //         "a {} {} {}",
-                //         f.borrow().a.pos.x,
-                //         f.borrow().a.pos.y,
-                //         f.borrow().a.pos.z
-                //     );
-                //     println!(
-                //         "b {} {} {}",
-                //         f.borrow().b.pos.x,
-                //         f.borrow().b.pos.y,
-                //         f.borrow().b.pos.z
-                //     );
-                //     println!();
-                // }
             }
 
             if debug {
