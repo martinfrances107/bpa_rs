@@ -119,15 +119,15 @@ impl Grid {
 // from
 // https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d
 pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
-    let ac = f.0[2].pos - f.0[0].pos;
-    let ab = f.0[1].pos - f.0[0].pos;
+    let ac = f.0[2].borrow().pos - f.0[0].borrow().pos;
+    let ab = f.0[1].borrow().pos - f.0[0].borrow().pos;
     let ab_cross_ac = ab.cross(ac);
 
     let to_circum_circle_center = (ab_cross_ac.cross(ab) * ac.dot(ac)
         + ac.cross(ab_cross_ac) * ab.dot(ab))
         / (2.0 * ab_cross_ac.dot(ab_cross_ac));
 
-    let circum_circle_center = f.0[0].pos + to_circum_circle_center;
+    let circum_circle_center = f.0[0].borrow().pos + to_circum_circle_center;
 
     let height_squared = radius * radius - to_circum_circle_center.dot(to_circum_circle_center);
     if height_squared.is_sign_negative() {
@@ -174,17 +174,13 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
 
             for p2 in neighborhood.clone() {
                 for p3 in neighborhood.clone() {
-                    if p2 == p3 {
+                    if p2.as_ptr() == p3.as_ptr() {
                         continue;
                     }
 
                     // only accept triangles which's normal points into the same
                     // half-space as the average normal of this cell's points
-                    let f = MeshFace([
-                        p1.borrow().clone(),
-                        p2.borrow().clone(),
-                        p3.borrow().clone(),
-                    ]);
+                    let f = MeshFace([p1.clone(), p2.clone(), p3.clone()]);
 
                     if f.normal().dot(avg_normal) < 0.0 {
                         continue;
@@ -243,12 +239,16 @@ pub(crate) fn ball_pivot(
     grid: &mut Grid,
     radius: f32,
 ) -> Option<PivotResult> {
-    let m = (e.borrow().a.pos + e.borrow().b.pos) / 2.0;
+    let m = (e.borrow().a.borrow().pos + e.borrow().b.borrow().pos) / 2.0;
     let old_center_vec = (e.borrow().center - m).normalize();
 
     let neighborhood = grid.spherical_neighborhood(
         &m,
-        &[e.borrow().a.pos, e.borrow().b.pos, e.borrow().opposite.pos],
+        &[
+            e.borrow().a.borrow().pos,
+            e.borrow().b.borrow().pos,
+            e.borrow().opposite.borrow().pos,
+        ],
     );
 
     if let Err(e) = COUNTER.try_with(|counter| {
@@ -263,9 +263,9 @@ pub(crate) fn ball_pivot(
         save_triangles_ascii(
             &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
             &[Triangle([
-                e.borrow().a.pos,
-                e.borrow().a.pos,
-                e.borrow().b.pos,
+                e.borrow().a.borrow().pos,
+                e.borrow().a.borrow().pos,
+                e.borrow().b.borrow().pos,
             ])],
         )
         .expect("Err - writing to pivot_edge");
@@ -291,9 +291,9 @@ pub(crate) fn ball_pivot(
             ss,
             "{}.pivoting edge a={} b={} op={}. testing {} neighbors",
             COUNTER.get(),
-            e.borrow().a.pos,
-            e.borrow().b.pos,
-            e.borrow().opposite.pos,
+            e.borrow().a.borrow().pos,
+            e.borrow().b.borrow().pos,
+            e.borrow().opposite.borrow().pos,
             neighborhood.len()
         )
         .expect("could not write debug");
@@ -303,8 +303,12 @@ pub(crate) fn ball_pivot(
     let mut smallest_number = 0;
     'next_neighborhood: for p in &neighborhood {
         i += 1;
-        let new_face_normal =
-            Triangle([e.borrow().b.pos, e.borrow().a.pos, p.borrow().pos]).normal();
+        let new_face_normal = Triangle([
+            e.borrow().b.borrow().pos,
+            e.borrow().a.borrow().pos,
+            p.borrow().pos,
+        ])
+        .normal();
 
         // this check is not in the paper: all points' normals must point into the
         // same half-space
@@ -313,11 +317,7 @@ pub(crate) fn ball_pivot(
         }
 
         let c = if let Some(c) = compute_ball_center(
-            &MeshFace([
-                e.borrow().b.clone(),
-                e.borrow().a.clone(),
-                p.borrow().clone(),
-            ]),
+            &MeshFace([e.borrow().b.clone(), e.borrow().a.clone(), p.clone()]),
             radius,
         ) {
             c
@@ -343,8 +343,8 @@ pub(crate) fn ball_pivot(
             save_triangles_ascii(
                 &PathBuf::from(format!("{}_{}_face.stl", COUNTER.get(), COUNTER2.get())),
                 &[Triangle([
-                    e.borrow().a.pos,
-                    e.borrow().b.pos,
+                    e.borrow().a.borrow().pos,
+                    e.borrow().b.borrow().pos,
                     p.borrow().pos,
                 ])],
             )
@@ -379,13 +379,14 @@ pub(crate) fn ball_pivot(
         // edge are not considered
         for ee in &p.borrow().edges {
             // const auto* otherPoint = ee->a == p ? ee->b : ee->a;
-            let other_point = if ee.borrow().a == *p.borrow() {
+            let other_point = if ee.borrow().a.as_ptr() == p.as_ptr() {
                 &ee.borrow().b
             } else {
                 &ee.borrow().a
             };
-            if ee.borrow().status == EdgeStatus::Inner && ( *other_point == e.borrow().a
-                || *other_point == e.borrow().b )
+            if ee.borrow().status == EdgeStatus::Inner
+                && (other_point.as_ptr() == e.borrow().a.as_ptr()
+                    || other_point.as_ptr() == e.borrow().b.as_ptr())
             {
                 if debug {
                     writeln!(&mut ss, "{i}.    {:?} inner edge exists", p.borrow().pos)
@@ -400,7 +401,7 @@ pub(crate) fn ball_pivot(
         let mut angle = (old_center_vec).dot(new_center_vec).clamp(-1.0, 1.0).acos();
         if new_center_vec
             .cross(old_center_vec)
-            .dot(e.borrow().a.pos - e.borrow().b.pos)
+            .dot(e.borrow().a.borrow().pos - e.borrow().b.borrow().pos)
             < 0.0_f32
         {
             angle += std::f32::consts::PI;
@@ -479,12 +480,16 @@ fn remove(e: &Rc<RefCell<MeshEdge>>) {
 }
 
 pub(crate) fn output_triangle(f: &MeshFace, triangles: &mut Vec<Triangle>) {
-    triangles.push(Triangle([f.0[0].pos, f.0[1].pos, f.0[2].pos]));
+    triangles.push(Triangle([
+        f.0[0].borrow().pos,
+        f.0[1].borrow().pos,
+        f.0[2].borrow().pos,
+    ]));
 }
 
 pub(crate) fn join(
     e_ij: &Rc<RefCell<MeshEdge>>,
-    o_k: &mut MeshPoint,
+    o_k: &Rc<RefCell<MeshPoint>>,
     o_k_ball_center: Vec3,
     front: &mut Vec<Rc<RefCell<MeshEdge>>>,
     edges: &mut Vec<Rc<RefCell<MeshEdge>>>,
@@ -511,7 +516,7 @@ pub(crate) fn join(
         Some(prev) => prev.borrow_mut().next = Some(e_ik.clone()),
         None => panic!("e_ij.prev Must be defined at this point"),
     }
-    e_ij.borrow_mut().a.edges.push(e_ik.clone());
+    e_ij.borrow().a.borrow_mut().edges.push(e_ik.clone());
 
     // e_kj
     e_kj.borrow_mut().prev = Some(e_ik.clone());
@@ -520,11 +525,12 @@ pub(crate) fn join(
         Some(next) => next.borrow_mut().prev = Some(e_kj.clone()),
         None => panic!("e_ij.prev is None"),
     }
-    e_ij.borrow_mut().b.edges.push(e_kj.clone());
+    e_ij.borrow().b.borrow_mut().edges.push(e_kj.clone());
 
-    o_k.used = true;
-    o_k.edges.push(e_ik.clone());
-    o_k.edges.push(e_kj.clone());
+    let mut o_k_inner = o_k.borrow_mut();
+    o_k_inner.used = true;
+    o_k_inner.edges.push(e_ik.clone());
+    o_k_inner.edges.push(e_kj.clone());
 
     front.push(e_ik.clone());
     front.push(e_kj.clone());
@@ -547,9 +553,9 @@ pub(crate) fn glue(
                 // This looks buggy the cpp version repeats e.a.pos.
                 // So a line not a triangle.
                 front_triangles.push(Triangle([
-                    e.borrow().a.pos,
-                    e.borrow().a.pos,
-                    e.borrow().b.pos,
+                    e.borrow().a.borrow().pos,
+                    e.borrow().a.borrow().pos,
+                    e.borrow().b.borrow().pos,
                 ]));
             }
             save_triangles_ascii(&PathBuf::from("glue_front.stl"), &front_triangles)
@@ -557,9 +563,9 @@ pub(crate) fn glue(
             save_triangles_ascii(
                 &PathBuf::from("glue_edges.stl"),
                 &[Triangle([
-                    a.borrow().a.pos,
-                    a.borrow().a.pos,
-                    a.borrow().b.pos,
+                    a.borrow().a.borrow().pos,
+                    a.borrow().a.borrow().pos,
+                    a.borrow().b.borrow().pos,
                 ])],
             )
             .expect("Err debug failing writing glue_edge.stl");
@@ -584,39 +590,41 @@ pub(crate) fn glue(
     }
 
     // case 2
-    if let (Some(a_next), Some(b_prev)) = (a.borrow().next.clone(), b.borrow().prev.clone()) {
-        if a_next.as_ptr() == b.as_ptr() && *b_prev.borrow() == *a.borrow() {
-            a.borrow_mut().prev.as_mut().unwrap().borrow_mut().next = b.borrow().next.clone();
-            b.borrow_mut().next.as_mut().unwrap().borrow_mut().prev = a.borrow().prev.clone();
-            remove(&a.clone());
-            remove(&b.clone());
-            return;
-        }
+    if a.borrow().next.clone().unwrap().as_ptr() == b.as_ptr()
+        && b.borrow().prev.clone().unwrap().as_ptr() == a.as_ptr()
+    {
+        a.clone().borrow().prev.as_ref().unwrap().borrow_mut().next = b.borrow().next.clone();
+        b.clone().borrow().next.as_ref().unwrap().borrow_mut().prev = a.borrow().prev.clone();
+        remove(&a.clone());
+        remove(&b.clone());
+        return;
+        // }
     }
 
-    if let (Some(a_prev), Some(b_next)) = (&a.borrow().prev, &b.borrow().next) {
-        if a_prev.as_ptr() == b.as_ptr() && b_next.as_ptr() == a.as_ptr() {
-            a.borrow_mut().next = b.borrow().next.clone();
-            b.borrow_mut().prev = a.borrow().prev.clone();
-            remove(&a.clone());
-            remove(&b.clone());
-            return;
-        }
+
+    if a.borrow().prev.clone().unwrap().as_ptr() == b.as_ptr()
+        && b.borrow().next.clone().unwrap().as_ptr() == a.as_ptr()
+    {
+        a.clone().borrow_mut().next = b.borrow().next.clone();
+        b.clone().borrow_mut().prev = a.borrow().prev.clone();
+        remove(&a.clone());
+        remove(&b.clone());
+        return;
     }
 
     // case 3/4
     if let Some(a_prev) = &mut a.borrow().prev.clone() {
         a_prev.borrow_mut().next = b.borrow().next.clone();
     }
-    // b->next->prev = a->prev;
+
     if let Some(b_next) = &mut b.borrow().next.clone() {
         b_next.borrow_mut().prev = a.borrow().prev.clone();
     }
-    // a->next->prev = b->prev;
+
     if let Some(a_next) = &mut a.borrow().next.clone() {
         a_next.borrow_mut().prev = b.borrow().prev.clone();
     }
-    // b->prev->next = a->next;
+
     if let Some(b_prev) = &mut b.borrow().prev.clone() {
         b_prev.borrow_mut().next = a.borrow().next.clone();
     }
@@ -627,8 +635,8 @@ pub(crate) fn glue(
 pub(crate) fn find_reverse_edge_on_front(
     edge: &Rc<RefCell<MeshEdge>>,
 ) -> Option<Rc<RefCell<MeshEdge>>> {
-    for e in &edge.borrow().a.edges {
-        if e.borrow().a == edge.borrow().b {
+    for e in &edge.borrow().a.borrow().edges {
+        if e.borrow().a.as_ptr() == edge.borrow().b.as_ptr() {
             return Some(e.clone());
         }
     }

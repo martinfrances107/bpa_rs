@@ -98,10 +98,8 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             let mut edges: Vec<Rc<RefCell<MeshEdge>>> = Vec::new();
             output_triangle(&f, &mut triangles);
 
-            let mut seed = f.0;
-            // println!("seed {}", seed[0]);
-            // println!("seed {}", seed[1]);
-            // println!("seed {}", seed[2]);
+            let seed = f.0;
+
             let e0 = Rc::new(RefCell::new(MeshEdge::new(
                 &seed[0],
                 &seed[1],
@@ -133,9 +131,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             e1.borrow_mut().prev = Some(e0.clone());
             e2.borrow_mut().next = Some(e0.clone());
 
-            seed[0].edges = vec![e0.clone(), e2.clone()];
-            seed[1].edges = vec![e0.clone(), e1.clone()];
-            seed[2].edges = vec![e1.clone(), e2.clone()];
+            seed[0].borrow_mut().edges = vec![e0.clone(), e2.clone()];
+            seed[1].borrow_mut().edges = vec![e0.clone(), e1.clone()];
+            seed[2].borrow_mut().edges = vec![e1.clone(), e2.clone()];
 
             let mut front = vec![e0, e1, e2];
             let debug = true;
@@ -158,9 +156,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
                         &[Triangle([
-                            e_ij.clone().borrow().a.pos,
-                            e_ij.clone().borrow().a.pos,
-                            e_ij.clone().borrow().b.pos,
+                            e_ij.clone().borrow().a.borrow().pos,
+                            e_ij.clone().borrow().a.borrow().pos,
+                            e_ij.clone().borrow().b.borrow().pos,
                         ])],
                     )
                     .expect("Failed(debug) to write front to file");
@@ -182,19 +180,13 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                         output_triangle(
                             &MeshFace([
                                 e_ij.clone().borrow().a.clone(),
-                                o_k.p.borrow().clone(),
+                                o_k.p.clone(),
                                 e_ij.clone().borrow().b.clone(),
                             ]),
                             &mut triangles,
                         );
 
-                        let (e_ik, e_kj) = join(
-                            &e_ij,
-                            &mut o_k.p.borrow_mut(),
-                            o_k.center,
-                            &mut front,
-                            &mut edges,
-                        );
+                        let (e_ik, e_kj) = join(&e_ij, &o_k.p, o_k.center, &mut front, &mut edges);
                         if let Some(e_ki) = find_reverse_edge_on_front(&e_ik.clone()) {
                             glue(&e_ik, &e_ki, &front);
                         }
@@ -214,7 +206,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     }
                     e_ij.borrow_mut().status = EdgeStatus::Boundary;
                 }
-
             }
 
             if debug {
@@ -223,17 +214,15 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 for e in front {
                     if e.borrow().status == EdgeStatus::Boundary {
                         boundary_edges.push(Triangle([
-                            e.borrow().a.pos,
-                            e.borrow().a.pos,
-                            e.borrow().b.pos,
+                            e.borrow().a.borrow().pos,
+                            e.borrow().a.borrow().pos,
+                            e.borrow().b.borrow().pos,
                         ]));
                     }
                 }
                 save_triangles_ascii(&PathBuf::from("boundary_edges.stl"), &boundary_edges)
                     .expect("Failed writing boundary_edges to file");
             }
-
-
 
             Some(triangles)
         }

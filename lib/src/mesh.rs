@@ -5,7 +5,7 @@ use glam::Vec3;
 
 use crate::Point;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct MeshPoint {
     pub(crate) pos: Vec3,
     pub(crate) normal: Vec3,
@@ -46,11 +46,11 @@ pub(crate) enum EdgeStatus {
     Boundary,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct MeshEdge {
-    pub(crate) a: MeshPoint,
-    pub(crate) b: MeshPoint,
-    pub(crate) opposite: MeshPoint,
+    pub(crate) a: Rc<RefCell<MeshPoint>>,
+    pub(crate) b: Rc<RefCell<MeshPoint>>,
+    pub(crate) opposite: Rc<RefCell<MeshPoint>>,
     pub(crate) center: Vec3,
     pub(crate) prev: Option<Rc<RefCell<MeshEdge>>>,
     pub(crate) next: Option<Rc<RefCell<MeshEdge>>>,
@@ -58,7 +58,12 @@ pub(crate) struct MeshEdge {
 }
 
 impl MeshEdge {
-    pub(crate) fn new(a: &MeshPoint, b: &MeshPoint, opposite: &MeshPoint, center: Vec3) -> Self {
+    pub(crate) fn new(
+        a: &Rc<RefCell<MeshPoint>>,
+        b: &Rc<RefCell<MeshPoint>>,
+        opposite: &Rc<RefCell<MeshPoint>>,
+        center: Vec3,
+    ) -> Self {
         Self {
             a: a.clone(),
             b: b.clone(),
@@ -72,11 +77,12 @@ impl MeshEdge {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct MeshFace(pub(crate) [MeshPoint; 3]);
+pub(crate) struct MeshFace(pub(crate) [Rc<RefCell<MeshPoint>>; 3]);
 
 impl MeshFace {
     pub(crate) fn normal(&self) -> Vec3 {
-        let cross = (self.0[0].pos - self.0[1].pos).cross(self.0[0].pos - self.0[2].pos);
+        let cross = (self.0[0].borrow().pos - self.0[1].borrow().pos)
+            .cross(self.0[0].borrow().pos - self.0[2].borrow().pos);
         cross.normalize()
     }
 }
