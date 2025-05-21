@@ -572,21 +572,14 @@ pub(crate) fn glue(
         }
     }
     // case 1
-    if let (Some(a_prev), Some(a_next), Some(b_prev), Some(b_next)) = (
-        a.borrow().prev.clone(),
-        a.borrow().next.clone(),
-        b.borrow().prev.clone(),
-        b.borrow().next.clone(),
-    ) {
-        if a_next.as_ptr() == b.as_ptr()
-            && a_prev.as_ptr() == b.as_ptr()
-            && b_next.as_ptr() == a.as_ptr()
-            && b_prev.as_ptr() == a.as_ptr()
-        {
+    if a.borrow().next.clone().unwrap().as_ptr() == b.as_ptr()
+        && a.borrow().prev.clone().unwrap().as_ptr() == b.as_ptr()
+        && b.borrow().next.clone().unwrap().as_ptr() == a.as_ptr()
+        && b.borrow().prev.clone().unwrap().as_ptr() == a.as_ptr()
+    {
             remove(&a.clone());
             remove(&b.clone());
             return;
-        }
     }
 
     // case 2
