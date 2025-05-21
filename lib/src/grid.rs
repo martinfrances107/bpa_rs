@@ -572,10 +572,10 @@ pub(crate) fn glue(
         b.borrow().prev.clone(),
         b.borrow().next.clone(),
     ) {
-        if a_next == *b
-            && *a_prev.borrow() == *b.borrow()
-            && *b_next.borrow() == *a.borrow()
-            && *b_prev.borrow() == *a.borrow()
+        if a_next.as_ptr() == b.as_ptr()
+            && a_prev.as_ptr() == b.as_ptr()
+            && b_next.as_ptr() == a.as_ptr()
+            && b_prev.as_ptr() == a.as_ptr()
         {
             remove(&a.clone());
             remove(&b.clone());
@@ -585,7 +585,7 @@ pub(crate) fn glue(
 
     // case 2
     if let (Some(a_next), Some(b_prev)) = (a.borrow().next.clone(), b.borrow().prev.clone()) {
-        if *a_next.borrow() == *b.borrow() && *b_prev.borrow() == *a.borrow() {
+        if a_next.as_ptr() == b.as_ptr() && *b_prev.borrow() == *a.borrow() {
             a.borrow_mut().prev.as_mut().unwrap().borrow_mut().next = b.borrow().next.clone();
             b.borrow_mut().next.as_mut().unwrap().borrow_mut().prev = a.borrow().prev.clone();
             remove(&a.clone());
@@ -595,7 +595,7 @@ pub(crate) fn glue(
     }
 
     if let (Some(a_prev), Some(b_next)) = (&a.borrow().prev, &b.borrow().next) {
-        if *a_prev == *b && *b_next == *a {
+        if a_prev.as_ptr() == b.as_ptr() && b_next.as_ptr() == a.as_ptr() {
             a.borrow_mut().next = b.borrow().next.clone();
             b.borrow_mut().prev = a.borrow().prev.clone();
             remove(&a.clone());
