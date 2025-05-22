@@ -130,7 +130,7 @@ pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
 
     let circum_circle_center = f.0[0].borrow().pos + to_circum_circle_center;
 
-    let height_squared = radius * radius - to_circum_circle_center.dot(to_circum_circle_center);
+    let height_squared = radius.mul_add(radius, -to_circum_circle_center.dot(to_circum_circle_center));
     if height_squared.is_sign_negative() {
         return None;
     }
@@ -139,10 +139,11 @@ pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
 }
 
 fn ball_is_empty(ball_center: &Vec3, points: &[Rc<RefCell<MeshPoint>>], radius: f32) -> bool {
+    let threshold = radius.mul_add(radius, -1e-4);
     !points.iter().any(|p| {
         let length_squared = (p.borrow().pos - ball_center).length_squared();
         // TODO epsilon
-        length_squared < radius * radius - 1e-4
+        length_squared < threshold
     })
 }
 
@@ -316,12 +317,10 @@ pub(crate) fn ball_pivot(
             continue;
         }
 
-        let c = if let Some(c) = compute_ball_center(
+        let Some(c) = compute_ball_center(
             &MeshFace([e.borrow().b.clone(), e.borrow().a.clone(), p.clone()]),
             radius,
-        ) {
-            c
-        } else {
+        ) else {
             if DEBUG {
                 writeln!(
                     &mut ss,
@@ -510,7 +509,7 @@ pub(crate) fn join(
 
     // e_ik
     e_ik.borrow_mut().next = Some(e_kj.clone());
-    e_ik.borrow_mut().prev = e_ij.borrow().prev.clone();
+    e_ik.borrow_mut().prev.clone_from(&e_ij.borrow().prev);
     match &e_ij.borrow().prev {
         Some(prev) => prev.borrow_mut().next = Some(e_ik.clone()),
         None => panic!("e_ij.prev Must be defined at this point"),
@@ -519,7 +518,7 @@ pub(crate) fn join(
 
     // e_kj
     e_kj.borrow_mut().prev = Some(e_ik.clone());
-    e_kj.borrow_mut().next = e_ij.borrow().next.clone();
+    e_kj.borrow_mut().next.clone_from(&e_ij.borrow().next);
     match &mut e_ij.borrow().next.clone() {
         Some(next) => next.borrow_mut().prev = Some(e_kj.clone()),
         None => panic!("e_ij.prev is None"),
@@ -583,8 +582,8 @@ pub(crate) fn glue(
     if a.borrow().next.clone().unwrap().as_ptr() == b.as_ptr()
         && b.borrow().prev.clone().unwrap().as_ptr() == a.as_ptr()
     {
-        a.clone().borrow().prev.as_ref().unwrap().borrow_mut().next = b.borrow().next.clone();
-        b.clone().borrow().next.as_ref().unwrap().borrow_mut().prev = a.borrow().prev.clone();
+        a.clone().borrow().prev.as_ref().unwrap().borrow_mut().next.clone_from(&b.borrow().next);
+        b.clone().borrow().next.as_ref().unwrap().borrow_mut().prev.clone_from(&a.borrow().prev);
         remove(&a.clone());
         remove(&b.clone());
         return;
@@ -594,8 +593,8 @@ pub(crate) fn glue(
     if a.borrow().prev.clone().unwrap().as_ptr() == b.as_ptr()
         && b.borrow().next.clone().unwrap().as_ptr() == a.as_ptr()
     {
-        a.clone().borrow_mut().next = b.borrow().next.clone();
-        b.clone().borrow_mut().prev = a.borrow().prev.clone();
+        a.clone().borrow_mut().next.clone_from(&b.borrow().next);
+        b.clone().borrow_mut().prev.clone_from(&a.borrow().prev);
         remove(&a.clone());
         remove(&b.clone());
         return;
@@ -603,19 +602,19 @@ pub(crate) fn glue(
 
     // case 3/4
     if let Some(a_prev) = &mut a.borrow().prev.clone() {
-        a_prev.borrow_mut().next = b.borrow().next.clone();
+      a_prev.borrow_mut().next.clone_from(&b.borrow().next);
     }
 
     if let Some(b_next) = &mut b.borrow().next.clone() {
-        b_next.borrow_mut().prev = a.borrow().prev.clone();
+      b_next.borrow_mut().prev.clone_from(&a.borrow().prev);
     }
 
     if let Some(a_next) = &mut a.borrow().next.clone() {
-        a_next.borrow_mut().prev = b.borrow().prev.clone();
+      a_next.borrow_mut().prev.clone_from(&b.borrow().prev);
     }
 
     if let Some(b_prev) = &mut b.borrow().prev.clone() {
-        b_prev.borrow_mut().next = a.borrow().next.clone();
+      b_prev.borrow_mut().next.clone_from(&a.borrow().next);
     }
     remove(a);
     remove(b);
