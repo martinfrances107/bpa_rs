@@ -393,7 +393,6 @@ pub(crate) fn ball_pivot(
                         .expect("could to write debug");
                 }
                 // This was a GOTO into the original c++ source.
-                println!("following goto");
                 continue 'next_neighborhood;
             }
         }

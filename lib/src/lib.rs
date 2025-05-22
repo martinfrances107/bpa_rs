@@ -143,7 +143,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     .expect("Failed(debug) to write seed to file");
             }
 
-            println!("initial front {} ", front.len());
             while let Some(e_ij) = get_active_edge(&mut front) {
                 if let Err(e) = COUNTER3.try_with(|counter3| {
                     counter3.set(counter3.get() + 1);
