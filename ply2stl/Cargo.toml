@@ -1,5 +1,5 @@
 [package]
-author={workspace=true}
+authors={workspace=true}
 categories = {workspace = true}
 description= "Convert a point cloud (.ply) file into a STL mesh"
 edition = "2024"
