@@ -577,9 +577,9 @@ pub(crate) fn glue(
         && b.borrow().next.clone().unwrap().as_ptr() == a.as_ptr()
         && b.borrow().prev.clone().unwrap().as_ptr() == a.as_ptr()
     {
-            remove(&a.clone());
-            remove(&b.clone());
-            return;
+        remove(&a.clone());
+        remove(&b.clone());
+        return;
     }
 
     // case 2
@@ -593,7 +593,6 @@ pub(crate) fn glue(
         return;
         // }
     }
-
 
     if a.borrow().prev.clone().unwrap().as_ptr() == b.as_ptr()
         && b.borrow().next.clone().unwrap().as_ptr() == a.as_ptr()
