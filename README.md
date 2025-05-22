@@ -21,7 +21,7 @@ cd ply2stl
 cargo run -- --help
 ```
 
-```rust
+```bash
 Usage: ply2stl [OPTIONS] --input <INPUT> --radius <RADIUS>
 
 Options:
