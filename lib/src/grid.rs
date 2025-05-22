@@ -160,7 +160,7 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
         for p1 in cell {
             let mut neighborhood = grid
                 .clone()
-                .spherical_neighborhood(&p1.borrow().pos, &vec![p1.borrow().pos]);
+                .spherical_neighborhood(&p1.borrow().pos, &[p1.borrow().pos]);
 
             neighborhood.sort_by(|a, b| {
                 if (a.borrow().pos - p1.borrow().pos).length_squared()

@@ -19,18 +19,22 @@ fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
 
     for slice in 0..slices {
         for stack in 1..stacks {
-            let yaw = (slice as f32 / slices as f32) * 2.0 * std::f32::consts::PI;
-            let z = (stack as f32 / stacks as f32 - 0.5).sin();
+            let yaw = (slice as f64 / slices as f64) * 2.0 * std::f64::consts::PI;
+            let z = (stack as f64 / stacks as f64 - 0.5).sin();
             let r = (1.0 - z * z).sqrt();
 
-            let x = r * yaw.sin();
-            let y = r * yaw.cos();
+            let x = (r * yaw.sin()) as f32;
+            let y = (r * yaw.cos()) as f32;
 
-            let pos = Vec3::new(x, y, z);
+            let v = Vec3::new(
+             x as f32,
+             y as f32,
+             z as f32
+            );
             // This makes no sense, but the original C++ code does this
             // could there be a implicit clone?.
-            let normal = pos - Vec3::new(0.0, 0.0, -1.0).normalize();
-            points.push(Point { pos, normal });
+            let normal = v - Vec3::new(0.0, 0.0, 0.0).normalize();
+            points.push(Point { pos: v, normal });
         }
     }
 
