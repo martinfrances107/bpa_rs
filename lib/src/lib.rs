@@ -45,7 +45,7 @@ thread_local! {
 
 }
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 // Why  Rc<RefCell<MeshPoint>>?
 //
@@ -151,8 +151,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     // Elsewhere COUNTER's destructor has been called!!!``
                     eprintln!("Access error incrementing debug counter: {e:?}");
                 }
-println!("COUNTER... {:#?}", COUNTER3.get());
-                debug_assert!(COUNTER3.get() !=1278);
+
                 if DEBUG {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),

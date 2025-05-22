@@ -1,8 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::grid::compute_ball_center;
 use crate::mesh::{MeshFace, MeshPoint};
 use glam::Vec3;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[test]
 fn isosceles() {
@@ -32,7 +32,11 @@ fn isosceles_larger_radius() {
 fn equilateral() {
     let a = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(0.0, 0.0, 0.0))));
     let b = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(10.0, 0.0, 0.0))));
-    let c = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(5.0, (3.0f32).sqrt() * 10.0 / 2.0, 0.0))));
+    let c = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(
+        5.0,
+        (3.0f32).sqrt() * 10.0 / 2.0,
+        0.0,
+    ))));
 
     let f = MeshFace([a, b, c]);
 

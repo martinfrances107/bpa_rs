@@ -259,7 +259,6 @@ pub(crate) fn ball_pivot(
         eprintln!("Access error incrementing debug counter: {e:?}");
     }
 
-
     if DEBUG {
         save_triangles_ascii(
             &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
