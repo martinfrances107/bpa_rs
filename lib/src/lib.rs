@@ -45,6 +45,8 @@ thread_local! {
 
 }
 
+const DEBUG: bool = true;
+
 // Why  Rc<RefCell<MeshPoint>>?
 //
 // When looping over neighborhood points the design needs mutable access
@@ -136,13 +138,11 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             seed[2].borrow_mut().edges = vec![e1.clone(), e2.clone()];
 
             let mut front = vec![e0, e1, e2];
-            let debug = true;
-            if debug {
+            if DEBUG {
                 save_triangles_ascii(&PathBuf::from("seed.stl"), &triangles)
                     .expect("Failed(debug) to write seed to file");
             }
 
-            let debug = true;
             println!("initial front {} ", front.len());
             while let Some(e_ij) = get_active_edge(&mut front) {
                 if let Err(e) = COUNTER3.try_with(|counter3| {
@@ -151,8 +151,9 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     // Elsewhere COUNTER's destructor has been called!!!``
                     eprintln!("Access error incrementing debug counter: {e:?}");
                 }
-
-                if debug {
+println!("COUNTER... {:#?}", COUNTER3.get());
+                debug_assert!(COUNTER3.get() !=1278);
+                if DEBUG {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),
                         &[Triangle([
@@ -165,7 +166,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
 
                 let o_k = ball_pivot(&e_ij.clone(), &mut grid, radius);
-                if debug {
+                if DEBUG {
                     save_triangles_ascii(&PathBuf::from("current_mesh.stl"), &triangles)
                         .expect("Failed(debug) writing current mesh to file");
                 }
@@ -197,7 +198,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                     }
                 }
                 if !boundary_test {
-                    if debug {
+                    if DEBUG {
                         if let Some(o_k_value) = o_k {
                             save_points(
                                 &PathBuf::from("current_boundary.ply"),
@@ -211,7 +212,7 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
             }
 
-            if debug {
+            if DEBUG {
                 let mut boundary_edges = vec![];
 
                 for e in front {

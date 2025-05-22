@@ -12,6 +12,7 @@ use glam::Vec3;
 use glam::ivec3;
 
 use crate::Cell;
+use crate::DEBUG;
 use crate::io::save_points;
 use crate::io::save_triangles_ascii;
 use crate::mesh::EdgeStatus;
@@ -258,8 +259,8 @@ pub(crate) fn ball_pivot(
         eprintln!("Access error incrementing debug counter: {e:?}");
     }
 
-    let debug = true;
-    if debug {
+
+    if DEBUG {
         save_triangles_ascii(
             &PathBuf::from(format!("{}_pivot_edge.stl", COUNTER.get())),
             &[Triangle([
@@ -286,7 +287,7 @@ pub(crate) fn ball_pivot(
     let mut center_of_smallest = Vec3::ZERO;
     let mut ss = String::new();
 
-    if debug {
+    if DEBUG {
         writeln!(
             ss,
             "{}.pivoting edge a={} b={} op={}. testing {} neighbors",
@@ -322,7 +323,7 @@ pub(crate) fn ball_pivot(
         ) {
             c
         } else {
-            if debug {
+            if DEBUG {
                 writeln!(
                     &mut ss,
                     "{i}.     {:?} center computation failed",
@@ -333,7 +334,7 @@ pub(crate) fn ball_pivot(
             continue;
         };
 
-        if debug {
+        if DEBUG {
             if let Err(e) = COUNTER2.try_with(|counter2| {
                 counter2.set(counter2.get() + 1);
             }) {
@@ -365,7 +366,7 @@ pub(crate) fn ball_pivot(
         let new_center_vec = (c - m).normalize();
         let new_center_face_dot = (new_center_vec).dot(new_face_normal);
         if new_center_face_dot < 0_f32 {
-            if debug {
+            if DEBUG {
                 writeln!(
                     &mut ss,
                     "{i}.    {:?} ball center {c:?} underneath triangle",
@@ -388,7 +389,7 @@ pub(crate) fn ball_pivot(
                 && (other_point.as_ptr() == e.borrow().a.as_ptr()
                     || other_point.as_ptr() == e.borrow().b.as_ptr())
             {
-                if debug {
+                if DEBUG {
                     writeln!(&mut ss, "{i}.    {:?} inner edge exists", p.borrow().pos)
                         .expect("could to write debug");
                 }
@@ -414,7 +415,7 @@ pub(crate) fn ball_pivot(
             smallest_number = i;
         }
 
-        if debug {
+        if DEBUG {
             writeln!(
                     &mut ss,
                     "{i}.   {}  center {c:?} angle {angle:?} next center face dot {new_center_face_dot}",
@@ -426,7 +427,7 @@ pub(crate) fn ball_pivot(
 
     if smallest_angle != f32::MAX {
         if ball_is_empty(&center_of_smallest, &neighborhood, radius) {
-            if debug {
+            if DEBUG {
                 writeln!(&mut ss, "       picking point {smallest_number}")
                     .expect("Could not render debug");
                 match &point_with_smallest_angle {
@@ -448,7 +449,7 @@ pub(crate) fn ball_pivot(
                 p: point_with_smallest_angle.unwrap(),
                 center: center_of_smallest,
             });
-        } else if debug {
+        } else if DEBUG {
             writeln!(
                 &mut ss,
                 "        found candidate {smallest_number} but bail int not empty",
@@ -457,7 +458,7 @@ pub(crate) fn ball_pivot(
         }
     }
 
-    if debug {
+    if DEBUG {
         println!("{ss}");
     }
 
@@ -544,9 +545,7 @@ pub(crate) fn glue(
     b: &Rc<RefCell<MeshEdge>>,
     front: &[Rc<RefCell<MeshEdge>>],
 ) {
-    // TODO replace this boolean with a proper check
-    let debug = true;
-    if debug {
+    if DEBUG {
         let mut front_triangles = vec![];
         for e in front {
             if e.borrow().status == EdgeStatus::Active {
