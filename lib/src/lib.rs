@@ -198,12 +198,15 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
                 }
                 if !boundary_test {
                     if debug {
-                        save_points(
-                            &PathBuf::from("current_boundary.ply"),
-                            &vec![o_k.unwrap().p.borrow().pos],
-                        )
-                        .expect("could not save current boundary");
+                        if let Some(o_k_value) = o_k {
+                            save_points(
+                                &PathBuf::from("current_boundary.ply"),
+                                &vec![o_k_value.p.borrow().pos],
+                            )
+                            .expect("could not save current boundary");
+                        }
                     }
+                    // Tarpaulin: This is uncovered.
                     e_ij.borrow_mut().status = EdgeStatus::Boundary;
                 }
             }
