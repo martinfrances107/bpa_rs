@@ -13,6 +13,6 @@ categories=["graphics", "mathematics"]
 edition = "2024"
 keywords = ["ply", "3ds", "mesh", "graphics", "surface", "reconstruction", "pointcloud", "stl"]
 license = "MIT"
-repository = "<https://github.com/martinfrances107/bpa_rs.git>"
+repository = "https://github.com/martinfrances107/bpa_rs.git"
 readme = "./README.md"
 version = "0.1.0"

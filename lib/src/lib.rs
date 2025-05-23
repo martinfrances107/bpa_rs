@@ -7,6 +7,9 @@
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 #![allow(clippy::many_single_char_names)]
+//! Surface reconstruction using the Ball Pivoting Algorithm.
+//!
+//! Converts a point cloud into a STL mesh.
 
 /// Stores the point cloud, helper functions and the main algorithm.
 pub mod grid;
