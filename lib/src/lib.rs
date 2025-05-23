@@ -7,7 +7,6 @@
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 #![allow(clippy::many_single_char_names)]
-#![doc = include_str!("../../README.md")]
 
 /// Stores the point cloud, helper functions and the main algorithm.
 pub mod grid;
