@@ -9,10 +9,12 @@
 #![allow(clippy::many_single_char_names)]
 #![doc = include_str!("../../README.md")]
 
-pub(crate) mod grid;
+/// Stores the point cloud, helper functions and the main algorithm.
+pub mod grid;
 /// Load and Save points and meshes.
 pub mod io;
-pub(crate) mod mesh;
+/// Internal structures for Points, Edges and Faces.
+pub mod mesh;
 #[cfg(test)]
 mod test;
 
@@ -39,7 +41,6 @@ use mesh::EdgeStatus;
 use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
-
 
 const DEBUG: bool = false;
 
@@ -72,8 +73,10 @@ impl Triangle {
 /// Base primitive for triangles and meshes.
 #[derive(Debug)]
 pub struct Point {
-    pos: Vec3,
-    normal: Vec3,
+    /// Position of the point
+    pub pos: Vec3,
+    /// Normal of the point
+    pub normal: Vec3,
 }
 
 /// Returns a mesh from a point cloud.
@@ -140,7 +143,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             }
 
             while let Some(e_ij) = get_active_edge(&mut front) {
-
                 if DEBUG {
                     save_triangles_ascii(
                         &PathBuf::from("current_active_edge.stl"),

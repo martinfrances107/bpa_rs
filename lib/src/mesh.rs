@@ -5,8 +5,9 @@ use glam::Vec3;
 
 use crate::Point;
 
+/// A point in 3D space with a normal vector, and list of edges
 #[derive(Clone, Debug)]
-pub(crate) struct MeshPoint {
+pub struct MeshPoint {
     pub(crate) pos: Vec3,
     pub(crate) normal: Vec3,
     pub(crate) used: bool,
@@ -15,9 +16,10 @@ pub(crate) struct MeshPoint {
 
 // Defining is MeshPoint without a normal
 // is useful for testing ONLY.
-#[cfg(test)]
 impl MeshPoint {
-    pub(crate) const fn new(pos: Vec3) -> Self {
+    /// Constructor
+    #[must_use]
+    pub const fn new(pos: Vec3) -> Self {
         Self {
             pos,
             normal: glam::vec3(0.0, 0.0, 0.0),
@@ -76,8 +78,9 @@ impl MeshEdge {
     }
 }
 
+/// A triangle in 3D space defined by three points
 #[derive(Clone, Debug)]
-pub(crate) struct MeshFace(pub(crate) [Rc<RefCell<MeshPoint>>; 3]);
+pub struct MeshFace(pub [Rc<RefCell<MeshPoint>>; 3]);
 
 impl MeshFace {
     pub(crate) fn normal(&self) -> Vec3 {

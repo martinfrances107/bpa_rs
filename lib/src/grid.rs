@@ -117,9 +117,15 @@ impl Grid {
     }
 }
 
-// from
-// https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d
-pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
+/// Computes the circumcenter of a triangle in 3D space.
+///
+/// The circumcenter is the center of the circle that passes through all three
+/// vertices of the triangle.
+///
+/// from
+/// <https://gamedev.stackexchange.com/questions/60630/how-do-i-find-the-circumcenter-of-a-triangle-in-3d>
+#[must_use]
+pub fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
     let ac = f.0[2].borrow().pos - f.0[0].borrow().pos;
     let ab = f.0[1].borrow().pos - f.0[0].borrow().pos;
     let ab_cross_ac = ab.cross(ac);
@@ -130,7 +136,10 @@ pub(crate) fn compute_ball_center(f: &MeshFace, radius: f32) -> Option<Vec3> {
 
     let circum_circle_center = f.0[0].borrow().pos + to_circum_circle_center;
 
-    let height_squared = radius.mul_add(radius, -to_circum_circle_center.dot(to_circum_circle_center));
+    let height_squared = radius.mul_add(
+        radius,
+        -to_circum_circle_center.dot(to_circum_circle_center),
+    );
     if height_squared.is_sign_negative() {
         return None;
     }
@@ -582,8 +591,22 @@ pub(crate) fn glue(
     if a.borrow().next.clone().unwrap().as_ptr() == b.as_ptr()
         && b.borrow().prev.clone().unwrap().as_ptr() == a.as_ptr()
     {
-        a.clone().borrow().prev.as_ref().unwrap().borrow_mut().next.clone_from(&b.borrow().next);
-        b.clone().borrow().next.as_ref().unwrap().borrow_mut().prev.clone_from(&a.borrow().prev);
+        a.clone()
+            .borrow()
+            .prev
+            .as_ref()
+            .unwrap()
+            .borrow_mut()
+            .next
+            .clone_from(&b.borrow().next);
+        b.clone()
+            .borrow()
+            .next
+            .as_ref()
+            .unwrap()
+            .borrow_mut()
+            .prev
+            .clone_from(&a.borrow().prev);
         remove(&a.clone());
         remove(&b.clone());
         return;
@@ -602,19 +625,19 @@ pub(crate) fn glue(
 
     // case 3/4
     if let Some(a_prev) = &mut a.borrow().prev.clone() {
-      a_prev.borrow_mut().next.clone_from(&b.borrow().next);
+        a_prev.borrow_mut().next.clone_from(&b.borrow().next);
     }
 
     if let Some(b_next) = &mut b.borrow().next.clone() {
-      b_next.borrow_mut().prev.clone_from(&a.borrow().prev);
+        b_next.borrow_mut().prev.clone_from(&a.borrow().prev);
     }
 
     if let Some(a_next) = &mut a.borrow().next.clone() {
-      a_next.borrow_mut().prev.clone_from(&b.borrow().prev);
+        a_next.borrow_mut().prev.clone_from(&b.borrow().prev);
     }
 
     if let Some(b_prev) = &mut b.borrow().prev.clone() {
-      b_prev.borrow_mut().next.clone_from(&a.borrow().next);
+        b_prev.borrow_mut().next.clone_from(&a.borrow().next);
     }
     remove(a);
     remove(b);

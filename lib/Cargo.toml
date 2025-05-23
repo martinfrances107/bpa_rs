@@ -18,3 +18,12 @@ glam = "0.30.2"
 
 [dev-dependencies]
 insta = { version = "1.43.1", features = ["yaml"] }
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "reconstruct"
+harness = false
+
+[[bench]]
+name = "compute_ball_center"
+harness = false

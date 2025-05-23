@@ -7,10 +7,7 @@ use crate::Point;
 use crate::Triangle;
 use crate::io::load_xyz;
 use crate::io::save_points;
-use crate::io::save_points_and_normals;
-use crate::io::save_triangles;
 use crate::reconstruct;
-use crate::save_triangles_ascii;
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
     let mut points = vec![Point {
@@ -69,35 +66,35 @@ fn measure_reconstruct(points: &Vec<Point>, radius: f32) -> Option<Vec<Triangle>
 #[test]
 fn sphere_36_18() {
     let cloud = create_spherical_cloud(36, 18);
-    if let Err(e) = save_points_and_normals(&PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
-        eprintln!("Error saving points: {}", e);
-    }
+    // if let Err(e) = save_points_and_normals(&PathBuf::from("sphere_36_18_cloud.ply"), &cloud) {
+    //     eprintln!("Error saving points: {}", e);
+    // }
 
     match measure_reconstruct(&cloud, 0.3_f32) {
-      Some(ref triangles) => {
-        assert_debug_snapshot!(triangles);
-      }
-      None => {
-        // Must generate a mesh.
-        debug_assert!(false);
-      }
+        Some(ref triangles) => {
+            assert_debug_snapshot!(triangles);
+        }
+        None => {
+            // Must generate a mesh.
+            debug_assert!(false);
+        }
     }
 }
 
 #[test]
 fn sphere_100_50() {
     let cloud = create_spherical_cloud(100, 50);
-    if let Err(e) = save_points_and_normals(&PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
-        eprintln!("Error saving points: {}", e);
-    }
+    // if let Err(e) = save_points_and_normals(&PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
+    //     eprintln!("Error saving points: {}", e);
+    // }
     match measure_reconstruct(&cloud, 0.1_f32) {
-      Some(ref triangles) => {
-        assert_debug_snapshot!(triangles);
-      }
-      None => {
-        // Must generate a mesh.
-        debug_assert!(false);
-      }
+        Some(ref triangles) => {
+            assert_debug_snapshot!(triangles);
+        }
+        None => {
+            // Must generate a mesh.
+            debug_assert!(false);
+        }
     }
 }
 
@@ -123,15 +120,14 @@ fn tetrahedron() {
     ];
 
     match measure_reconstruct(&cloud, 2f32) {
-      Some(ref triangles) => {
-        assert_debug_snapshot!(triangles);
-      }
-      None => {
-        // Must generate a mesh.
-        debug_assert!(false);
-      }
+        Some(ref triangles) => {
+            assert_debug_snapshot!(triangles);
+        }
+        None => {
+            // Must generate a mesh.
+            debug_assert!(false);
+        }
     }
-
 }
 
 #[test]
@@ -172,15 +168,14 @@ fn cube() {
     ];
 
     match measure_reconstruct(&cloud, 2f32) {
-      Some(ref triangles) => {
-        assert_debug_snapshot!(triangles);
-      }
-      None => {
-        // Must generate a mesh.
-        debug_assert!(false);
-      }
+        Some(ref triangles) => {
+            assert_debug_snapshot!(triangles);
+        }
+        None => {
+            // Must generate a mesh.
+            debug_assert!(false);
+        }
     }
-
 }
 
 #[test]
@@ -190,12 +185,12 @@ fn bunny() {
         load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny for test to begin");
 
     match measure_reconstruct(&cloud, 0.002f32) {
-      Some(ref triangles) => {
-        assert_debug_snapshot!(triangles);
-      }
-      None => {
-        // Must generate a mesh.
-        debug_assert!(false);
-      }
+        Some(ref triangles) => {
+            assert_debug_snapshot!(triangles);
+        }
+        None => {
+            // Must generate a mesh.
+            debug_assert!(false);
+        }
     }
 }
