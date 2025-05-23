@@ -1,30 +1,68 @@
-# `bpa_rs`
+# Ball Pivoting Algorithm (BPA)
 
-Rust 2021 Edition.
-
-## Ball Pivoting Algorithm (BPA)
+Rust 2024 Edition.
 
 Mesh Reconstruction from a Point Cloud.
 
 This a port of this c++ application [bpa](<https://github.com/bernhardmgruber/bpa>)
 
-The Ball-Pivoting Algorithm for Surface Reconstruction by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabriel Taubin
+From this paper.
 
-This project is separated into a library and a "ply2stl" binary file
+> "The Ball-Pivoting Algorithm for Surface Reconstruction"
 
-To run the binary
+by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabriel Taubin
 
-```bash
-cd ply2stl
-cargo run -- --help
+## How to use the library
+
+* Call reconstruct() with your point cloud data.
+* The resultant mesh can then be further processed
+* Saved the mesh as a STL file.
+
+For example :-
+
+```rust
+    let cloud =
+        load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny");
+
+    // Construct a mesh from a point cloud.
+    match reconstruct(&cloud, 0.002f32) {
+        Some(ref triangles) => {
+            // triangles is a vector of Triangles
+            // where
+            //
+            // struct Triangle([Vec3; 3]);
+
+            // Process the mesh.
+            todo!();
+
+            // Save the triangle as a STL file.
+            save_triangles(&PathBuf::from("output.stl"), triangles)
+                .expect("Err debug failing writing glue_front.stl");
+
+        }
+        None => {
+            println!("Did not generate a mesh.");
+
+        }
+    }
 ```
 
-```bash
-Usage: ply2stl [OPTIONS] --input <INPUT> --radius <RADIUS>
+## Testing
 
-Options:
-  -i, --input <INPUT>    point cloud file
-  -r, --radius <RADIUS>
-  -o, --output <OUTPUT>  output mesh file mesh
-  -h, --help             Print help
-```
+### Verification
+
+The original libraries test with  tetrahedron, cubes, spheres and bunny point cloud. Those tests has been recreated.
+
+### Snapshots
+
+The original only tests for the existence of the test meshes. This port snapshots those meshed making any
+further development stable.
+
+### Benchmarking
+
+reconstruct() and compute_ball_center() have a criterion test harness..
+This version appears to run 40% faster than the cpp version, but I think there is some work be done to enhance performance.
+
+## Further work
+
+Add a WASM example showing a mesh being reconstructed in a web browser.

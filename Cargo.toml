@@ -8,10 +8,10 @@ default-members = ["./lib"]
 
 [workspace.package]
 authors = ["Martin Frances<martinfrances107@hotmail.com>"]
-description = "A Rust implementation of the Binary Partitioning Algorithm (BPA) for 3D point cloud data."
+description = "Reconstruct a 3D surface from a point cloud using the Ball Pivoting Algorithm (BPA)."
 categories=["graphics", "mathematics"]
 edition = "2024"
-keywords = ["implicit","reconstruction", "surface"]
+keywords = ["ply", "3ds", "mesh", "graphics", "surface", "reconstruction", "pointcloud", "stl"]
 license = "MIT"
 repository = "<https://github.com/martinfrances107/bpa_rs.git>"
 readme = "./README.md"
