@@ -2,6 +2,14 @@
 
 Rust 2024 Edition.
 
+<div align="center">
+
+<a href="https://crates.io/crates/bpa"><img alt="crates.io" src="https://img.shields.io/crates/v/bpa.svg"/></a>
+<a href="https://docs.rs/bpa" rel="nofollow noopener noreferrer"><img src="https://docs.rs/bpa/badge.svg" alt="Documentation"></a>
+<a href="https://crates.io/crates/bpa"><img src="https://img.shields.io/crates/d/bpa.svg" alt="Download" /></a>
+
+</div>
+
 Mesh Reconstruction from a Point Cloud.
 
 This a port of this c++ application [bpa](<https://github.com/bernhardmgruber/bpa>)
