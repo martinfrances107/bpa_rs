@@ -40,10 +40,6 @@ use mesh::MeshEdge;
 use mesh::MeshFace;
 use mesh::MeshPoint;
 
-thread_local! {
-  static COUNTER3: std::cell::Cell<i32> = const { std::cell::Cell::new(0) };
-
-}
 
 const DEBUG: bool = false;
 
@@ -144,12 +140,6 @@ pub fn reconstruct(points: &[Point], radius: f32) -> Option<Vec<Triangle>> {
             }
 
             while let Some(e_ij) = get_active_edge(&mut front) {
-                if let Err(e) = COUNTER3.try_with(|counter3| {
-                    counter3.set(counter3.get() + 1);
-                }) {
-                    // Elsewhere COUNTER's destructor has been called!!!``
-                    eprintln!("Access error incrementing debug counter: {e:?}");
-                }
 
                 if DEBUG {
                     save_triangles_ascii(
