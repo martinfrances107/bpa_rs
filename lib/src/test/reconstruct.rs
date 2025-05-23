@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use glam::Vec3;
+use insta::assert_debug_snapshot;
 
 use crate::Point;
 use crate::Triangle;
@@ -72,12 +73,14 @@ fn sphere_36_18() {
         eprintln!("Error saving points: {}", e);
     }
 
-    let mesh = measure_reconstruct(&cloud, 0.3f32);
-    assert!(mesh.is_some());
-
-    if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_36_18_mesh.stl"), &triangles)
-            .expect("failed to write to sphere_36_18_mesh");
+    match measure_reconstruct(&cloud, 0.3_f32) {
+      Some(ref triangles) => {
+        assert_debug_snapshot!(triangles);
+      }
+      None => {
+        // Must generate a mesh.
+        debug_assert!(false);
+      }
     }
 }
 
@@ -87,12 +90,14 @@ fn sphere_100_50() {
     if let Err(e) = save_points_and_normals(&PathBuf::from("sphere_100_50_cloud.ply"), &cloud) {
         eprintln!("Error saving points: {}", e);
     }
-    let mesh = measure_reconstruct(&cloud, 0.1f32);
-
-    assert!(mesh.is_some());
-    if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("sphere_100_50_mesh.stl"), &triangles)
-            .expect("failed to write to sphere_100_50_mesh");
+    match measure_reconstruct(&cloud, 0.1_f32) {
+      Some(ref triangles) => {
+        assert_debug_snapshot!(triangles);
+      }
+      None => {
+        // Must generate a mesh.
+        debug_assert!(false);
+      }
     }
 }
 
@@ -117,16 +122,16 @@ fn tetrahedron() {
         },
     ];
 
-    if let Err(e) = save_points_and_normals(&PathBuf::from("tetrahedron_cloud.ply"), &cloud) {
-        eprintln!("Error saving points: {}", e);
+    match measure_reconstruct(&cloud, 2f32) {
+      Some(ref triangles) => {
+        assert_debug_snapshot!(triangles);
+      }
+      None => {
+        // Must generate a mesh.
+        debug_assert!(false);
+      }
     }
 
-    let mesh = measure_reconstruct(&cloud, 2f32);
-    assert!(mesh.is_some());
-    if let Some(triangles) = mesh {
-        save_triangles_ascii(&PathBuf::from("tetrahedron_cloud.stl"), &triangles)
-            .expect("failed to save tetrahedron_cloud");
-    }
 }
 
 #[test]
@@ -166,16 +171,16 @@ fn cube() {
         },
     ];
 
-    if let Err(e) = save_points_and_normals(&PathBuf::from("cube_cloud.ply"), &cloud) {
-        eprintln!("Error saving cube_cloud: {}", e);
+    match measure_reconstruct(&cloud, 2f32) {
+      Some(ref triangles) => {
+        assert_debug_snapshot!(triangles);
+      }
+      None => {
+        // Must generate a mesh.
+        debug_assert!(false);
+      }
     }
 
-    let mesh = measure_reconstruct(&cloud, 2f32);
-    assert!(mesh.is_some());
-    if let Some(triangles) = mesh {
-        save_triangles_ascii(&PathBuf::from("cube_mesh.stl"), &triangles)
-            .expect("could not output cube_mesh.stl");
-    }
 }
 
 #[test]
@@ -184,10 +189,13 @@ fn bunny() {
     let cloud =
         load_xyz(&PathBuf::from("../data/bunny.xyz")).expect("Cannot load bunny for test to begin");
 
-    let mesh = measure_reconstruct(&cloud, 0.002f32);
-    assert!(mesh.is_some());
-    if let Some(triangles) = mesh {
-        save_triangles(&PathBuf::from("bunny_mesh.stl"), &triangles)
-            .expect("Failed to save bunny.stl");
+    match measure_reconstruct(&cloud, 0.002f32) {
+      Some(ref triangles) => {
+        assert_debug_snapshot!(triangles);
+      }
+      None => {
+        // Must generate a mesh.
+        debug_assert!(false);
+      }
     }
 }
