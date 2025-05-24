@@ -20,13 +20,21 @@ From this paper.
 
 by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabriel Taubin
 
+ <image src="https://github.com/martinfrances107/bpa_rs/blob/main/images/Reconstructed.png?raw=true">
+
 ## How to use the library
 
 * Call reconstruct() with your point cloud data.
+* Select the ball radius.
 * The resultant mesh can then be further processed
 * Saved the mesh as a STL file.
 
-For example :-
+Selection of the appropriate radius is a **critical** parameter,  that must be set on a per cloud basis.
+
+* Too small and as the ball rolls it will miss edges.
+* Too large will result in a loss of detail.
+
+Here is an skeleton outline of how the library can be used.:-
 
 ```rust
     let cloud =
