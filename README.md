@@ -25,7 +25,7 @@ by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabri
 ## How to use the library
 
 * Select the ball radius.
-* Call reconstruct() with your point cloud data.
+* Call `reconstruct()` with your point cloud data.
 * The resultant mesh can then be further processed
 * Saved the mesh as a STL file.
 
@@ -76,7 +76,7 @@ further development stable.
 
 ### Benchmarking
 
-reconstruct() and compute_ball_center() have a criterion test harness..
+`reconstruct()` and `compute_ball_center()` have a criterion test harness..
 This version appears to run 40% faster than the cpp version, but I think there is some work be done to enhance performance.
 
 ## Contributions

@@ -12,7 +12,7 @@
 use std::path::PathBuf;
 
 use bpa_rs::io::load_xyz;
-use bpa_rs::io::save_triangles_ascii;
+use bpa_rs::io::save_triangles;
 use bpa_rs::reconstruct;
 use clap::Parser;
 use clap::arg;
@@ -30,8 +30,7 @@ struct Cli {
 
 fn main() -> std::io::Result<()> {
     let args = Cli::parse();
-    println!("args: {args:?}");
-    println!("input: {:?}", args.input);
+
     let output = args.output.clone().unwrap_or_else(|| {
         let mut path = args.input.clone();
         path.set_extension("stl");
@@ -42,7 +41,7 @@ fn main() -> std::io::Result<()> {
 
     match reconstruct(&points, args.radius) {
         Some(triangles) => {
-            if let Err(e) = save_triangles_ascii(&output, &triangles) {
+            if let Err(e) = save_triangles(&output, &triangles) {
                 eprintln!("Exception occurred while writing to file. {e}");
             }
         }

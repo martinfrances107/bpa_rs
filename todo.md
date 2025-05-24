@@ -6,15 +6,12 @@
 
 ## Publish on crates.io
 
-  Updated README
-  Prepare Images
-  README for lib says no::std friendly .. wasm?
-
-  README for ply2stl just mentions library
-
 ## Publish ply2stl
 
 get ply2stl running the bunny.
+get dragon running.
+prepare images.
+Prepare build options for production.
 
 ## Refinement
 
