@@ -24,8 +24,8 @@ by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabri
 
 ## How to use the library
 
-* Call reconstruct() with your point cloud data.
 * Select the ball radius.
+* Call reconstruct() with your point cloud data.
 * The resultant mesh can then be further processed
 * Saved the mesh as a STL file.
 
