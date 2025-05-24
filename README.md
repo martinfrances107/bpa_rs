@@ -79,6 +79,19 @@ further development stable.
 reconstruct() and compute_ball_center() have a criterion test harness..
 This version appears to run 40% faster than the cpp version, but I think there is some work be done to enhance performance.
 
+## Contributions
+
+Contributions are welcome.
+
+A criticism of this implementation is that it makes overuse of the `RC<RefCell<T>>` pattern for points and edges.
+
+The cpp version version does not make use of unique pointers so I expected the RUST code to be slower.
+That fact that the rust code is faster is a puzzle
+( Maybe RUST's unique MIRI interpreter can see optimizations in the more structured/"more explicitly defined" code base )
+That makes me think that restructuring here, could open up further speed increases.
+
 ## Further work
 
 Add a WASM example showing a mesh being reconstructed in a web browser.
+
+DHAT test harnesses could be used to identify excessive memory allocations.
