@@ -94,4 +94,4 @@ That makes me think that restructuring here, could open up further speed increas
 
 Add a WASM example showing a mesh being reconstructed in a web browser.
 
-DHAT test harnesses could be used to identify excessive memory allocations.
+Add a DHAT test harnesses that could be used to identify excessive memory allocations.
