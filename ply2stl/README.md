@@ -26,3 +26,5 @@ Options:
   -o, --output <OUTPUT>  output mesh file mesh
   -h, --help             Print help
 ```
+
+if no --output tags specified. The specified input file will be used, with the extension changed to .stl

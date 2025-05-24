@@ -1,3 +1,4 @@
 !# /usr/bin/bash
 rm *.ply *.stl
-cargo run -- -i ../data/bunny.xyz -r 2
+time cargo run --release -- -i ../data/bunny.xyz -r 0.002
+
