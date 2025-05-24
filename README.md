@@ -4,9 +4,9 @@ Rust 2024 Edition.
 
 <div align="center">
 
-<a href="https://crates.io/crates/bpa"><img alt="crates.io" src="https://img.shields.io/crates/v/bpa.svg"/></a>
-<a href="https://docs.rs/bpa" rel="nofollow noopener noreferrer"><img src="https://docs.rs/bpa/badge.svg" alt="Documentation"></a>
-<a href="https://crates.io/crates/bpa"><img src="https://img.shields.io/crates/d/bpa.svg" alt="Download" /></a>
+<a href="https://crates.io/crates/bpa_rs"><img alt="crates.io" src="https://img.shields.io/crates/v/bpa_rs.svg"/></a>
+<a href="https://docs.rs/bpa_rs" rel="nofollow noopener noreferrer"><img src="https://docs.rs/bpa_rs/badge.svg" alt="Documentation"></a>
+<a href="https://crates.io/crates/bpa"><img src="https://img.shields.io/crates/d/bpa_rs.svg" alt="Download" /></a>
 
 </div>
 
