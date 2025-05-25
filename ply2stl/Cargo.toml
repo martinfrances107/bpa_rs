@@ -6,10 +6,15 @@ edition = "2024"
 name = "ply2stl"
 keywords = {workspace = true}
 license = {workspace=true}
-readme = {workspace = true}
+readme = "README.md"
 repository = {workspace = true}
 version = "0.1.0"
 
 [dependencies]
 bpa_rs = { path = "../lib/"}
 clap = { version ="4.5.37", features = ["derive"]}
+
+[profile.release]
+lto = true
+opt-level = 3
+strip = "symbols"

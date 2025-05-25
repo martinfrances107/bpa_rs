@@ -28,3 +28,8 @@ Options:
 ```
 
 if no --output tags specified. The specified input file will be used, with the extension changed to .stl
+
+Known Issues.
+
+A wildly inappropriate radius will hang the program.
+  It would be good add an optional timeout.
