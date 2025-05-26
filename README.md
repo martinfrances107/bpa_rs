@@ -79,6 +79,27 @@ further development stable.
 `reconstruct()` and `compute_ball_center()` have a criterion test harness..
 This version appears to run 40% faster than the cpp version, but I think there is some work be done to enhance performance.
 
+### Flamegraph
+
+The git repository associated with this crate has an associated example app.
+
+ply2stl is an example app that opens a ply file, and uses the library to perform the mesh reconstruction algorithm. The output mesh is a stl file. ( In the ply file the normals are face are not specified  )
+
+```/usr/bin/bash
+cargo install flamegraph
+cd ply2stl
+./flamegraph.sh
+```
+
+the output is stored in flamegraph.svg.
+
+ply2stl is a [clap](<https://crates.io/crates/clap>) application. Where "-i" is used to specify the input file
+and "--radius" is the ball radius.
+
+```/usr/bin/bash
+cargo flamegraph --release -- -i ../data/bunny.xyz --radius 0.002
+```
+
 ## Contributions
 
 Contributions are welcome.

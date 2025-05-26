@@ -1,14 +1,3 @@
-// fn isosceles() {
-//   let a = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(0.0, 0.0, 0.0))));
-//   let b = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(10.0, 0.0, 0.0))));
-//   let c = Rc::new(RefCell::new(MeshPoint::new(Vec3::new(0.0, 10.0, 0.0))));
-
-//   let f = MeshFace([a, b, c]);
-
-//   let center = compute_ball_center(&f, 10.0);
-//   assert_eq!(center, Some(Vec3::new(5.0, 5.0, 7.07106781)));
-// }
-
 use core::cell::RefCell;
 use std::rc::Rc;
 
