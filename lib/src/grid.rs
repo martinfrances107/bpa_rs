@@ -184,7 +184,7 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
             });
 
             for p2 in neighborhood.clone() {
-                for p3 in neighborhood.clone() {
+                for p3 in &neighborhood {
                     if p2.as_ptr() == p3.as_ptr() {
                         continue;
                     }
