@@ -297,6 +297,11 @@ pub(crate) fn ball_pivot(
     let mut ss = String::new();
 
     if DEBUG {
+      let mut ss = String::new();
+    }
+
+    if DEBUG {
+        let mut ss = String::new();
         writeln!(
             ss,
             "{}.pivoting edge a={} b={} op={}. testing {} neighbors",
@@ -414,7 +419,9 @@ pub(crate) fn ball_pivot(
             angle += std::f32::consts::PI;
         }
         if angle < smallest_angle {
-            writeln!(&mut ss, "ball pivot angle < smallest angle").expect("could not write debug");
+            if DEBUG {
+              writeln!(&mut ss, "ball pivot angle < smallest angle").expect("could not write debug");
+            }
             smallest_angle = angle;
             point_with_smallest_angle = Some(p.clone());
             center_of_smallest = c;
