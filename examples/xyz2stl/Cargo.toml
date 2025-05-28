@@ -3,7 +3,7 @@ authors={workspace=true}
 categories = {workspace = true}
 description= "Convert a point cloud (.ply) file into a STL mesh"
 edition = "2024"
-name = "ply2stl"
+name = "xyz2stl"
 keywords = {workspace = true}
 license = {workspace=true}
 readme = "README.md"
@@ -11,10 +11,9 @@ repository = {workspace = true}
 version = "0.1.0"
 
 [dependencies]
-bpa_rs = { path = "../lib/"}
+bpa_rs = { path = "../../lib/"}
 clap = { version ="4.5.37", features = ["derive"]}
+dhat = "0.3.3"
 
-[profile.release]
-lto = true
-opt-level = 3
-strip = "symbols"
+[features]
+dhat-heap = []    # if you are doing heap profiling

@@ -1,7 +1,7 @@
 [workspace]
 members = [
   "./lib",
-  "./ply2stl"
+  "./examples/xyz2stl"
 ]
 resolver = "2"
 default-members = ["./lib"]
@@ -19,3 +19,5 @@ version = "0.1.1"
 
 [profile.release]
 debug = true
+lto = true
+opt-level = 3

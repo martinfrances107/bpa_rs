@@ -7,7 +7,7 @@
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 #![allow(clippy::many_single_char_names)]
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../../../README.md")]
 
 use std::path::PathBuf;
 
@@ -16,6 +16,11 @@ use bpa_rs::io::save_triangles;
 use bpa_rs::reconstruct;
 use clap::Parser;
 use clap::arg;
+
+#[cfg(feature = "dhat-heap")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
+
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about)]
@@ -29,6 +34,10 @@ struct Cli {
 }
 
 fn main() -> std::io::Result<()> {
+
+      #[cfg(feature = "dhat-heap")]
+    let _profiler = dhat::Profiler::new_heap();
+
     let args = Cli::parse();
 
     let output = args.output.clone().unwrap_or_else(|| {

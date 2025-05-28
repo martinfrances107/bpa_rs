@@ -6,7 +6,7 @@
 
 ## Publish on crates.io
 
-## Publish ply2stl
+## Publish xyz2stl
 
 get dragon running.
 prepare images.
