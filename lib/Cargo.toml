@@ -8,7 +8,8 @@ name = "bpa_rs"
 license = {workspace=true}
 readme = {workspace = true}
 repository = {workspace=true}
-version = {workspace=true}
+version = "0.1.2"
+
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -18,7 +19,7 @@ glam = "0.30.2"
 
 [dev-dependencies]
 insta = { version = "1.43.1", features = ["yaml"] }
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.6", features = ["html_reports"] }
 
 [[bench]]
 name = "reconstruct"

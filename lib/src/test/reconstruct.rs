@@ -6,7 +6,6 @@ use insta::assert_debug_snapshot;
 use crate::Point;
 use crate::Triangle;
 use crate::io::load_xyz;
-use crate::io::save_points;
 use crate::reconstruct;
 
 fn create_spherical_cloud(slices: i32, stacks: i32) -> Vec<Point> {
