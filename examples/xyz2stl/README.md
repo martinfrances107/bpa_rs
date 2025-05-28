@@ -56,7 +56,7 @@ cargo run --release -- -i ../data/bunny.xyz -r 0.002
 
 ## Contributions
 
-Contributions are welcome. In particular if your xyz file  has issues please file a github issue.
+Contributions are welcome. In particular if your xyz file has issues please file a github issue.
 
 ## Known Issues
 

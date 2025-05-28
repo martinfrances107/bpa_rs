@@ -24,7 +24,7 @@ by Fausto Bernardini, Joshua Mittleman, Holly Rushmeier, Claudio Silva and Gabri
 
 ## How to use the library
 
-A examples program is provided in the git repository associated with this crate
+A example program is provided in the git repository associated with this crate ( see examples/xyz2stl )
 
 Here is the outline
 
@@ -33,7 +33,7 @@ Here is the outline
 * The resultant mesh can then be further processed
 * Saved the mesh as a STL file.
 
-Selection of the appropriate radius is a **critical** parameter,  that must be set on a per cloud basis.
+Selection of the appropriate radius is a **critical** parameter, that must be set on a per cloud basis.
 
 * Too small and as the ball rolls it will miss edges.
 * Too large will result in a loss of detail.
@@ -69,8 +69,6 @@ Here is an skeleton outline of how the library can be used.:-
 
 ## Testing
 
-### **Verification**
-
 The original libraries test with  tetrahedron, cubes, spheres and bunny point cloud. Those tests has been recreated.
 
 ### Snapshots
@@ -91,7 +89,7 @@ xyz2stl is an example app that opens a xyz file, and uses the library to perform
 
 ```/usr/bin/bash
 cargo install flamegraph
-cd zyx2stl
+cd examples/xyz2stl
 ./flamegraph.sh
 ```
 
@@ -108,7 +106,7 @@ cargo flamegraph --release -- -i ../data/bunny.xyz --radius 0.002
 
 [DHAT](https://crates.io/crates/dhat) is a heap profiling tool.
 
-WARNING dhat is experimental and currently requires the rust version to downgraded to the "2021" edition  and rust to version "1.82.0".
+WARNING dhat is experimental and currently requires the rust version to be downgraded to the "2021" edition  and rust to version "1.82.0".
 
  For the generation of memory profile report ( dhat-heap.json ) there is an accompanying script dhat.sh which contains the following, and can be used as a benchmark.
 
@@ -131,5 +129,3 @@ That makes me think that restructuring here, could open up further speed increas
 ## Further work
 
 Add a WASM example showing a mesh being reconstructed in a web browser.
-
-Add a DHAT test harnesses that could be used to identify excessive memory allocations.
