@@ -102,11 +102,11 @@ and "--radius" is the ball radius.
 cargo flamegraph --release -- -i ../data/bunny.xyz --radius 0.002
 ```
 
-## Dhat
+### Dhat
 
 [DHAT](https://crates.io/crates/dhat) is a heap profiling tool.
 
-WARNING dhat is experimental and currently requires the rust version to be downgraded to the "2021" edition  and rust to version "1.82.0".
+WARNING dhat is experimental and currently requires the rust version to be downgraded to the "2021" edition and rustc to version "1.82.0".
 
  For the generation of memory profile report ( dhat-heap.json ) there is an accompanying script dhat.sh which contains the following, and can be used as a benchmark.
 
