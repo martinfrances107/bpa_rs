@@ -119,6 +119,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bpa_rs"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75a50f005c6ce5c459ab0ed54cec2ca280e7d22ae2c56a8f838b5478bcb98322"
+dependencies = [
+ "glam",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -897,7 +906,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 name = "xyz2stl"
 version = "0.1.0"
 dependencies = [
- "bpa_rs",
+ "bpa_rs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap",
  "dhat",
 ]
