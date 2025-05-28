@@ -10,6 +10,7 @@ readme = "README.md"
 repository = {workspace = true}
 version = "0.1.0"
 
+
 [dependencies]
 bpa_rs = "0.1.2"
 clap = { version ="4.5.37", features = ["derive"]}
