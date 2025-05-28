@@ -7,7 +7,7 @@
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
 #![allow(clippy::many_single_char_names)]
-#![doc = include_str!("../../../README.md")]
+#![doc = include_str!("../README.md")]
 
 use std::path::PathBuf;
 
