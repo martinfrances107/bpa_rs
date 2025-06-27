@@ -1,4 +1,5 @@
 use std::io::BufRead;
+use std::io::BufWriter;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -20,20 +21,22 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
         std::fs::create_dir_all(parent)?;
     }
 
-    let mut file = std::fs::File::create(path)?;
+    let file = std::fs::File::create(path)?;
+
+    let mut writer = BufWriter::new(file);
 
     // Header
-    file.write_all(&[b' '; 80])?;
+    writer.write_all(&[b' '; 80])?;
 
     let count = u32::try_from(triangles.len())
         .expect("stl file format cannot contain more than 4,294,967,295 triangles");
-    file.write_all(&count.to_le_bytes())?;
+      writer.write_all(&count.to_le_bytes())?;
 
     for t in triangles {
         // Normals
         let normal = (t.0[0] - t.0[1]).cross(t.0[0] - t.0[2]).normalize();
         let normal_bytes = normal.to_array().map(f32::to_le_bytes).concat();
-        file.write_all(&normal_bytes)?;
+        writer.write_all(&normal_bytes)?;
         // Triangles
         let triangle_bytes =
             t.0.map(|v| v.to_array())
@@ -42,14 +45,11 @@ pub fn save_triangles(path: &PathBuf, triangles: &[Triangle]) -> std::io::Result
                 .map(|f| f.to_le_bytes())
                 .collect::<Vec<_>>()
                 .concat();
-        file.write_all(&triangle_bytes)?;
+              writer.write_all(&triangle_bytes)?;
 
         // Attribute count
-        file.write_all(&ATTRIBUTE_COUNT)?;
+        writer.write_all(&ATTRIBUTE_COUNT)?;
     }
-
-    file.flush()?;
-    file.sync_all()?;
 
     Ok(())
 }
@@ -66,25 +66,26 @@ pub fn save_triangles_ascii(path: &PathBuf, triangles: &[Triangle]) -> std::io::
     if path.parent().is_some() {
         std::fs::create_dir_all(path.parent().unwrap())?;
     }
-    let mut file = std::fs::File::create(path)?;
+    let file = std::fs::File::create(path)?;
+    let mut writer = BufWriter::new(file);
 
-    writeln!(file, "solid {}", path.to_str().unwrap())?;
+    writeln!(writer, "solid {}", path.to_str().unwrap())?;
 
     for t in triangles {
         let normal = (t.0[0] - t.0[1]).cross(t.0[0] - t.0[2]).normalize();
         writeln!(
-            file,
+          writer,
             "  facet normal {} {} {}",
             normal.x, normal.y, normal.z
         )?;
-        writeln!(file, "    outer loop")?;
-        writeln!(file, "      vertex {} {} {}", t.0[0].x, t.0[0].y, t.0[0].z)?;
-        writeln!(file, "      vertex {} {} {}", t.0[1].x, t.0[1].y, t.0[1].z)?;
-        writeln!(file, "      vertex {} {} {}", t.0[2].x, t.0[2].y, t.0[2].z)?;
-        writeln!(file, "    endloop")?;
-        writeln!(file, "  endfacet")?;
+        writeln!(writer, "    outer loop")?;
+        writeln!(writer, "      vertex {} {} {}", t.0[0].x, t.0[0].y, t.0[0].z)?;
+        writeln!(writer, "      vertex {} {} {}", t.0[1].x, t.0[1].y, t.0[1].z)?;
+        writeln!(writer, "      vertex {} {} {}", t.0[2].x, t.0[2].y, t.0[2].z)?;
+        writeln!(writer, "    endloop")?;
+        writeln!(writer, "  endfacet")?;
     }
-    writeln!(file, "endsolid")?;
+    writeln!(writer, "endsolid")?;
 
     Ok(())
 }
@@ -103,17 +104,18 @@ pub fn save_points_and_normals(
         std::fs::create_dir_all(parent)?;
     }
 
-    let mut file = std::fs::File::create(path)?;
-    writeln!(file, "ply")?;
-    writeln!(file, "format binary_little_endian 1.0")?;
-    writeln!(file, "element vertex {}", points.len())?;
-    writeln!(file, "property float x")?;
-    writeln!(file, "property float y")?;
-    writeln!(file, "property float z")?;
-    writeln!(file, "property float nx")?;
-    writeln!(file, "property float ny")?;
-    writeln!(file, "property float nz")?;
-    writeln!(file, "end_header")?;
+    let file = std::fs::File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    writeln!(writer, "ply")?;
+    writeln!(writer, "format binary_little_endian 1.0")?;
+    writeln!(writer, "element vertex {}", points.len())?;
+    writeln!(writer, "property float x")?;
+    writeln!(writer, "property float y")?;
+    writeln!(writer, "property float z")?;
+    writeln!(writer, "property float nx")?;
+    writeln!(writer, "property float ny")?;
+    writeln!(writer, "property float nz")?;
+    writeln!(writer, "end_header")?;
     let mut buffer: Vec<u8> = Vec::new();
     for point in points {
         buffer.extend_from_slice(
@@ -133,9 +135,7 @@ pub fn save_points_and_normals(
                 .collect::<Vec<u8>>(),
         );
     }
-    file.write_all(&buffer)?;
-    file.flush()?;
-    file.sync_all()?;
+    writer.write_all(&buffer)?;
 
     Ok(())
 }
@@ -149,14 +149,15 @@ pub fn save_points(path: &PathBuf, points: &Vec<Vec3>) -> Result<(), Box<dyn std
         std::fs::create_dir_all(parent)?;
     }
 
-    let mut file = std::fs::File::create(path)?;
-    writeln!(file, "ply")?;
-    writeln!(file, "format binary_little_endian 1.0")?;
-    writeln!(file, "element vertex {}", points.len())?;
-    writeln!(file, "property float x")?;
-    writeln!(file, "property float y")?;
-    writeln!(file, "property float z")?;
-    writeln!(file, "end_header")?;
+    let file = std::fs::File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    writeln!(writer, "ply")?;
+    writeln!(writer, "format binary_little_endian 1.0")?;
+    writeln!(writer, "element vertex {}", points.len())?;
+    writeln!(writer, "property float x")?;
+    writeln!(writer, "property float y")?;
+    writeln!(writer, "property float z")?;
+    writeln!(writer, "end_header")?;
     let mut buffer: Vec<u8> = Vec::new();
     for point in points {
         buffer.extend_from_slice(
@@ -167,9 +168,7 @@ pub fn save_points(path: &PathBuf, points: &Vec<Vec3>) -> Result<(), Box<dyn std
                 .collect::<Vec<u8>>(),
         );
     }
-    file.write_all(&buffer)?;
-    file.flush()?;
-    file.sync_all()?;
+    writer.write_all(&buffer)?;
 
     Ok(())
 }
