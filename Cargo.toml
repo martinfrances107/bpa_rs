@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "./lib",
-  "./examples/xyz2stl"
-]
+  "lib",
+  "examples/xyz2stl",
+ ]
 resolver = "2"
 default-members = ["./lib"]
 
