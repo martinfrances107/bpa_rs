@@ -1,0 +1,1 @@
+RUST_LOG=info cargo run  --release -- -i ../../data/grid.ply --radius 0.1 -o output.stl

@@ -1,6 +1,6 @@
 use core::cell::RefCell;
-use std::rc::Rc;
 use std::hint::black_box;
+use std::rc::Rc;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use glam::Vec3;

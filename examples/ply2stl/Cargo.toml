@@ -1,0 +1,17 @@
+[package]
+name = "ply2stl"
+version = "0.1.0"
+authors.workspace = true
+description = "Convert a point cloud (.ply) file into a STL mesh"
+categories.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[dependencies]
+bpa_rs = { path = "../../lib/" }
+clap = { version = "4.5.37", features = ["derive"] }
+env_logger = "0.11.8"
+log = "0.4.27"

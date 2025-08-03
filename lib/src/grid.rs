@@ -297,7 +297,7 @@ pub(crate) fn ball_pivot(
     let mut ss = String::new();
 
     if DEBUG {
-      let mut ss = String::new();
+        let mut ss = String::new();
     }
 
     if DEBUG {
@@ -420,7 +420,8 @@ pub(crate) fn ball_pivot(
         }
         if angle < smallest_angle {
             if DEBUG {
-              writeln!(&mut ss, "ball pivot angle < smallest angle").expect("could not write debug");
+                writeln!(&mut ss, "ball pivot angle < smallest angle")
+                    .expect("could not write debug");
             }
             smallest_angle = angle;
             point_with_smallest_angle = Some(p.clone());

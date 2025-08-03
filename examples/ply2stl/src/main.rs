@@ -6,20 +6,14 @@
 #![warn(clippy::perf)]
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
-#![allow(clippy::many_single_char_names)]
-#![doc = include_str!("../README.md")]
+//! Convert a point cloud (.ply) file into a STL mesh
 
 use std::path::PathBuf;
 
-use bpa_rs::io::load_xyz;
 use bpa_rs::io::save_triangles;
-use bpa_rs::reconstruct;
+use bpa_rs::{Point, reconstruct};
 use clap::Parser;
-use clap::arg;
-
-#[cfg(feature = "dhat-heap")]
-#[global_allocator]
-static ALLOC: dhat::Alloc = dhat::Alloc;
+use log::info;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about)]
@@ -33,21 +27,21 @@ struct Cli {
 }
 
 fn main() -> std::io::Result<()> {
-    #[cfg(feature = "dhat-heap")]
-    let _profiler = dhat::Profiler::new_heap();
+    env_logger::init();
+    info!("starting up");
 
     let args = Cli::parse();
-
     let output = args.output.clone().unwrap_or_else(|| {
         let mut path = args.input.clone();
         path.set_extension("stl");
         path
     });
 
-    let points = load_xyz(&args.input)?;
+    let points: Vec<Point> = bpa_rs::io::load_ply(&args.input)?;
 
     match reconstruct(&points, args.radius) {
         Some(triangles) => {
+            info!("reconstruction complete... saving");
             if let Err(e) = save_triangles(&output, &triangles) {
                 eprintln!("Exception occurred while writing to file. {e}");
             }
