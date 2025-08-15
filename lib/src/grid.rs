@@ -197,13 +197,13 @@ pub(crate) fn find_seed_triangle(grid: &Grid, radius: f32) -> Option<SeedResult>
                         continue;
                     }
                     let ball_center = compute_ball_center(&f, radius);
-                    if let Some(ball_center) = ball_center {
-                        if ball_is_empty(&ball_center, &neighborhood, radius) {
-                            p1.borrow_mut().used = true;
-                            p2.borrow_mut().used = true;
-                            p3.borrow_mut().used = true;
-                            return Some(SeedResult { f, ball_center });
-                        }
+                    if let Some(ball_center) = ball_center
+                        && ball_is_empty(&ball_center, &neighborhood, radius)
+                    {
+                        p1.borrow_mut().used = true;
+                        p2.borrow_mut().used = true;
+                        p3.borrow_mut().used = true;
+                        return Some(SeedResult { f, ball_center });
                     }
                 }
             }
