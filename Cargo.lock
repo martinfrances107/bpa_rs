@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "bpa_rs"
-version = "0.2.3"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "glam",
@@ -673,7 +673,7 @@ dependencies = [
 name = "ply2stl"
 version = "0.1.0"
 dependencies = [
- "bpa_rs 0.2.3",
+ "bpa_rs 0.2.0",
  "clap",
  "env_logger",
  "log",
