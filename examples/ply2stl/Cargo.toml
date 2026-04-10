@@ -12,6 +12,6 @@ readme.workspace = true
 
 [dependencies]
 bpa_rs = { path = "../../lib/" }
-clap = { version = "4.5.37", features = ["derive"] }
+clap = { version = "4.5.48", features = ["derive"] }
 env_logger = "0.11.8"
-log = "0.4.27"
+log = "0.4.28"

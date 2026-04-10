@@ -14,12 +14,12 @@ version = "0.2.0"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-glam = "0.30.8"
+glam = "0.32.1"
 log = "0.4.28"
 
 [dev-dependencies]
 insta = { version = "1.43.2", features = ["yaml"] }
-criterion = { version = "0.7", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 [[bench]]
 name = "reconstruct"
