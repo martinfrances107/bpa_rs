@@ -63,7 +63,7 @@ type Cell = Vec<Rc<RefCell<MeshPoint>>>;
 
 /// A series of Points
 #[derive(Debug)]
-pub struct Triangle([Vec3; 3]);
+pub struct Triangle(pub [Vec3; 3]);
 
 impl Triangle {
     fn normal(&self) -> Vec3 {
