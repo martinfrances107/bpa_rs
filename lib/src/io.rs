@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::io::BufWriter;
+use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -229,7 +230,7 @@ pub fn load_xyz(path: &PathBuf) -> std::io::Result<Vec<Point>> {
 ///   When there is a unreadable value in the file.
 pub fn load_ply(path: &PathBuf) -> std::io::Result<Vec<Point>> {
     let file = std::fs::File::open(path)?;
-    let mut reader = std::io::BufReader::new(file);
+    let mut reader = BufReader::new(file);
 
     let header = parse_ply_header(&mut reader)
         .map_err(|_| std::io::Error::other("did not decode header correctly"))?;
@@ -255,23 +256,24 @@ pub fn load_ply(path: &PathBuf) -> std::io::Result<Vec<Point>> {
         let mut x = 0_f32;
         let mut y = 0_f32;
         let mut z = 0_f32;
-        for (i, (value, _value_type)) in header.ordered_properties.iter().enumerate() {
+        for (i, (value, _value_type, _nitems_type)) in header.ordered_properties.iter().enumerate()
+        {
             if value == "x" {
                 x = parts[i].parse().unwrap();
             }
-            if value == "y" {
+            if *value == "y" {
                 y = parts[i].parse().unwrap();
             }
-            if value == "z" {
+            if *value == "z" {
                 z = parts[i].parse().unwrap();
             }
-            if value == "nx" {
+            if *value == "nx" {
                 nx = parts[i].parse().unwrap();
             }
-            if value == "ny" {
+            if *value == "ny" {
                 ny = parts[i].parse().unwrap();
             }
-            if value == "nz" {
+            if *value == "nz" {
                 nz = parts[i].parse().unwrap();
             }
             // drop comment labels such as r,g,b
@@ -380,10 +382,11 @@ struct Header {
     pub format: Format,
     /// The number of vertices in the PLY file.
     pub vertex_count: u64,
-    /// The columns of the data section (label, type)
-    pub ordered_properties: Vec<(String, Type)>,
+    /// The columns of the data section (label, type, n_items_type)
+    pub ordered_properties: Vec<(String, Type, Option<Type>)>,
 }
 
+#[derive(Debug)]
 enum HeaderError {
     InvalidFile,
     Malformed,
@@ -405,7 +408,10 @@ enum HeaderError {
 // format binary_little_endian 1.0
 // format binary_big_endian 1.0
 //
-fn parse_ply_header(buffer: &mut BufReader<File>) -> Result<Header, HeaderError> {
+fn parse_ply_header<T>(buffer: &mut BufReader<T>) -> Result<Header, HeaderError>
+where
+    T: Read,
+{
     info!("Reading header");
     // Return error is the first line is not "ply"
     let mut line = String::new();
@@ -466,16 +472,60 @@ fn parse_ply_header(buffer: &mut BufReader<File>) -> Result<Header, HeaderError>
         if line == "format ascii 1.0" {
             format = Some(Format::Ascii(1.0));
         }
+
         if line.starts_with("property") {
             // Extract the property
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            assert!(parts.len() == 3, "Failed to parse: {line}");
-            let prop_type = Type::try_from(parts[1]).expect("Unknown type");
-            let label = parts[2].to_string();
-            ordered_properties.push((label, prop_type));
-            continue;
+            println!("Property: {line}");
+            let parts: Vec<&str> = line.split_whitespace().map(|s| s.into()).collect();
+            if parts[1] == "list" {
+                assert!(parts.len() == 5, "Failed to parse property list: {line}");
+
+                println!("n_items {}", parts[2]);
+                let n_item_type = Type::try_from(parts[2]).expect("Unknown type");
+                let prop_type = Type::try_from(parts[3]).expect("Unknown type");
+                let label = parts[4].to_owned();
+                ordered_properties.push((label, prop_type, Some(n_item_type)));
+            } else {
+                assert!(parts.len() == 3, "Failed to parse: property {line}");
+                let prop_type = Type::try_from(parts[1]).expect("Unknown type");
+                let label = parts[2].to_owned();
+                // Dummy n_items type (uint32) as the values will be 1.
+                ordered_properties.push((label, prop_type, None));
+                continue;
+            }
         }
     }
 
     Err(HeaderError::Malformed)
+}
+
+#[cfg(test)]
+mod test {
+
+    use std::io::Cursor;
+
+    use super::*;
+    use insta::assert_debug_snapshot;
+
+    // Tests the use of property list
+    #[test]
+    fn test_parse_ply_header() {
+        let header = r"ply
+format ascii 1.0
+comment This is a comment!
+element vertex 779966
+property float x
+property float y
+property float z
+property list uchar int vertex_indicies
+end_header";
+
+        let mut cursor = Cursor::new(header);
+        let mut bufreader = BufReader::new(&mut cursor);
+
+        let result = parse_ply_header(&mut bufreader);
+        assert!(result.is_ok(), "Failed to parse PLY header: {result:?}");
+        let header = result.unwrap();
+        assert_debug_snapshot!(header);
+    }
 }

@@ -1,0 +1,34 @@
+---
+source: lib/src/io.rs
+expression: header
+---
+Header {
+    format: Ascii(
+        1.0,
+    ),
+    vertex_count: 779966,
+    ordered_properties: [
+        (
+            "x",
+            Float,
+            None,
+        ),
+        (
+            "y",
+            Float,
+            None,
+        ),
+        (
+            "z",
+            Float,
+            None,
+        ),
+        (
+            "vertex_indicies",
+            Int,
+            Some(
+                Uchar,
+            ),
+        ),
+    ],
+}
