@@ -8,6 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use glam::Vec3;
+use log::error;
 use log::info;
 
 use crate::{Point, Triangle};
@@ -293,6 +294,8 @@ pub fn load_ply(path: &PathBuf) -> std::io::Result<Vec<Point>> {
 }
 
 // The file type of the PLY file.
+//
+// Stores the version number of the format.
 #[derive(Debug)]
 enum Format {
     Ascii(f32),
@@ -408,6 +411,7 @@ enum HeaderError {
 // format binary_little_endian 1.0
 // format binary_big_endian 1.0
 //
+#[track_caller]
 fn parse_ply_header<T>(buffer: &mut BufReader<T>) -> Result<Header, HeaderError>
 where
     T: Read,
@@ -469,8 +473,33 @@ where
             continue;
         }
 
-        if line == "format ascii 1.0" {
-            format = Some(Format::Ascii(1.0));
+        if line.starts_with("format") {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            assert!(parts.len() == 3, "Failed to parse: {line}");
+            format = Some(match parts[1] {
+                "ascii" => {
+                    let version = parts[2]
+                        .parse::<f32>()
+                        .expect("format ascii expecting a version number");
+                    Format::Ascii(version)
+                }
+                "binary_little_endian" => {
+                    let version = parts[2]
+                        .parse::<f32>()
+                        .expect("format binary_little_endian expecting a version number");
+                    Format::BinaryLittleEndian(version)
+                }
+                "binary_big_endian" => {
+                    let version = parts[2]
+                        .parse::<f32>()
+                        .expect("format binary_big_endian expecting a version number");
+                    Format::BinaryBigEndian(version)
+                }
+                _ => {
+                    error!("unrecognised format string");
+                    return Err(HeaderError::InvalidFile);
+                }
+            });
         }
 
         if line.starts_with("property") {
